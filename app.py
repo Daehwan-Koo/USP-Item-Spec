@@ -1,10 +1,15 @@
 import pandas as pd
 import sqlite3
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
+
+# ✅ 비밀번호 설정 (이 값을 원하는 값으로 변경)
+ADMIN_PASSWORD = "admin0123"  # 수정 가능
+VIEWER_PASSWORD = "usp0123"  # 수정 불가 (열람 전용)
 
 EXCEL_FILE_PATH = "DB_Excel.xlsx"
 DB_FILE_PATH = "claims.db"
@@ -145,8 +150,41 @@ def add_product():
 
     return render_template('add.html')
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        password = request.form["password"]
+        
+        if password == ADMIN_PASSWORD:
+            session["role"] = "admin"  # 관리자 권한 부여
+            flash("관리자로 로그인했습니다!", "success")
+            return redirect(url_for("index"))
+        
+        elif password == VIEWER_PASSWORD:
+            session["role"] = "viewer"  # 열람 전용 권한 부여
+            flash("열람 전용으로 로그인했습니다!", "info")
+            return redirect(url_for("index"))
+        
+        else:
+            flash("잘못된 비밀번호입니다. 다시 시도하세요.", "danger")
+    
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.pop("role", None)  # 세션에서 권한 제거
+    flash("로그아웃했습니다.", "info")
+    return redirect(url_for("login"))
+
+
 @app.route('/edit/<item_code>', methods=['GET', 'POST'])
 def edit_product(item_code):
+    if "role" not in session:
+        return redirect(url_for("login"))  # 로그인 안 한 경우 로그인 페이지로 이동
+    if session["role"] != "admin":
+        flash("수정 권한이 없습니다!", "danger")
+        return redirect(url_for("index"))  # 관리자만 수정 가능
+
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
 
@@ -169,8 +207,8 @@ def edit_product(item_code):
         unit_size = request.form['unit_size']
         color = request.form['color']
         weight = request.form['weight']
-        dosage = request.form['dosage']  # dosage 값 가져오기
-        remark = request.form.get('remark', '')  # REMARK 값 가져오기
+        dosage = request.form['dosage']
+        remark = request.form.get('remark', '')
 
         try:
             cursor.execute('''
@@ -204,12 +242,12 @@ def edit_product(item_code):
                     ''', (product_id, claim_main, claim_description, claim_concentration))
 
             conn.commit()
-            flash('Product updated successfully!', 'success')
+            flash('제품 정보가 수정되었습니다!', 'success')
             return redirect(url_for('index'))
 
         except sqlite3.Error as e:
             conn.rollback()
-            flash(f'An error occurred: {str(e)}', 'error')
+            flash(f'오류 발생: {str(e)}', 'danger')
             return render_template('edit.html', product=request.form, claims=[])
 
         finally:
@@ -217,6 +255,12 @@ def edit_product(item_code):
 
 @app.route('/delete/<item_code>')
 def delete_product(item_code):
+    if "role" not in session:
+        return redirect(url_for("login"))  # 로그인하지 않은 사용자는 로그인 페이지로 이동
+    if session["role"] != "admin":
+        flash("삭제 권한이 없습니다!", "danger")
+        return redirect(url_for("index"))  # 관리자만 삭제 가능
+
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
     try:
@@ -225,13 +269,15 @@ def delete_product(item_code):
         # 제품 삭제
         cursor.execute('DELETE FROM products WHERE item_code = ?', (item_code,))
         conn.commit()
-        flash('Product deleted successfully!', 'success')
+        flash('제품이 성공적으로 삭제되었습니다!', 'success')
     except sqlite3.Error as e:
         conn.rollback()
-        flash(f'An error occurred: {str(e)}', 'error')
+        flash(f'오류 발생: {str(e)}', 'danger')
     finally:
         conn.close()
+
     return redirect(url_for('index'))
+
 
 @app.route('/')
 def index():
