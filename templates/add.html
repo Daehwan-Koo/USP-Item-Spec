@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .claims-container {
+            margin-top: 20px;
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .claim {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            background-color: #ffffff;
+        }
+        .claim .form-group {
+            margin-bottom: 10px;
+        }
+        .remove-claim {
+            background-color: #f44336;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .add-claim {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #5cb85c;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #4cae4c;
+        }
+        a {
+            color: #337ab7;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .error {
+            color: #f44336;
+            margin-top: 5px;
+        }
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Add Product</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="message {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="post">
+        <div class="form-group">
+            <label for="item_code">Item Code:</label>
+            <input type="text" id="item_code" name="item_code" required>
+        </div>
+        <div class="form-group">
+            <label for="item_name">Item Name:</label>
+            <input type="text" id="item_name" name="item_name">
+        </div>
+        <div class="form-group">
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description">
+        </div>
+        <div class="form-group">
+            <label for="unit_size">Unit Size:</label>
+            <input type="text" id="unit_size" name="unit_size">
+        </div>
+        <div class="form-group">
+            <label for="color">Color:</label>
+            <input type="text" id="color" name="color">
+        </div>
+        <div class="form-group">
+            <label for="weight">Weight (mg):</label>
+            <input type="number" id="weight" name="weight" step="any">
+        </div>
+        <div class="form-group">
+            <label for="dosage">Dosage:</label>
+            <input type="text" id="dosage" name="dosage">
+        </div>
+        <div class="form-group">
+            <label for="remark">Remark:</label>
+            <textarea id="remark" name="remark" rows="4"></textarea>
+        </div>
+
+        <div class="claims-container">
+            <h3>Claims</h3>
+            <div id="claims">
+                <div class="claim">
+                    <div class="form-group">
+                        <label for="claim_main_0">Main Claim:</label>
+                        <input type="text" id="claim_main_0" name="claim_main[]">
+                    </div>
+                    <div class="form-group">
+                        <label for="claim_description_0">Claim Description:</label>
+                        <input type="text" id="claim_description_0" name="claim_description[]">
+                    </div>
+                    <div class="form-group">
+                        <label for="claim_concentration_0">Claim Concentration:</label>
+                        <input type="number" id="claim_concentration_0" name="claim_concentration[]" step="any">
+                    </div>
+                    <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
+                </div>
+            </div>
+            <button type="button" class="add-claim" onclick="addClaim()">Add Claim</button>
+        </div>
+
+        <button type="submit">Save</button>
+        <a href="{{ url_for('index') }}">Cancel</a>
+    </form>
+
+    <script>
+        let claimCount = 1;
+
+        function addClaim() {
+            const claimsContainer = document.getElementById('claims');
+            const newClaim = document.createElement('div');
+            newClaim.classList.add('claim');
+            newClaim.innerHTML = `
+                <div class="form-group">
+                    <label for="claim_main_${claimCount}">Main Claim:</label>
+                    <input type="text" id="claim_main_${claimCount}" name="claim_main[]">
+                </div>
+                <div class="form-group">
+                    <label for="claim_description_${claimCount}">Claim Description:</label>
+                    <input type="text" id="claim_description_${claimCount}" name="claim_description[]">
+                </div>
+                <div class="form-group">
+                    <label for="claim_concentration_${claimCount}">Claim Concentration:</label>
+                    <input type="number" id="claim_concentration_${claimCount}" name="claim_concentration[]" step="any">
+                </div>
+                <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
+            `;
+            claimsContainer.appendChild(newClaim);
+            claimCount++;
+        }
+
+        function removeClaim(element) {
+            element.parentNode.remove();
+        }
+    </script>
+</body>
+</html>
