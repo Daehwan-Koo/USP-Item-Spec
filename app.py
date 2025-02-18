@@ -13,8 +13,8 @@ VIEWER_PASSWORD = "usp0123"  # 수정 불가 (열람 전용)
 # 🔹 로그인하지 않으면 모든 페이지에서 로그인 페이지로 강제 이동
 @app.before_request
 def require_login():
-    allowed_routes = ["login", "autocomplete"]  # 자동 완성 라우트 추가
-    if "role" not in session and request.endpoint not in allowed_routes:
+    allowed_routes = ["login", "autocomplete", "static"]  # 자동 완성 및 static 폴더 라우트 추가
+    if "role" not in session and request.endpoint not in allowed_routes and not request.path.startswith('/static'):
         return redirect(url_for("login"))
 
 EXCEL_FILE_PATH = "DB_Excel.xlsx"
@@ -145,10 +145,12 @@ def autocomplete():
 
     return jsonify(suggestions)
 
-
-
 @app.route('/add', methods=['GET', 'POST'])
 def add_product():
+    if "role" not in session or session["role"] != "admin":
+        flash("권한이 없습니다.", "danger")
+        return redirect(url_for("index"))
+
     if request.method == 'POST':
         item_code = request.form['item_code']
         item_name = request.form['item_name']
@@ -223,14 +225,11 @@ def logout():
     flash("로그아웃했습니다.", "info")
     return redirect(url_for("login"))
 
-
 @app.route('/edit/<item_code>', methods=['GET', 'POST'])
 def edit_product(item_code):
-    if "role" not in session:
-        return redirect(url_for("login"))  # 로그인 안 한 경우 로그인 페이지로 이동
-    if session["role"] != "admin":
-        flash("수정 권한이 없습니다!", "danger")
-        return redirect(url_for("index"))  # 관리자만 수정 가능
+    if "role" not in session or session["role"] != "admin":
+        flash("권한이 없습니다.", "danger")
+        return redirect(url_for("index"))
 
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
@@ -316,11 +315,9 @@ def edit_product(item_code):
 
 @app.route('/delete/<item_code>')
 def delete_product(item_code):
-    if "role" not in session:
-        return redirect(url_for("login"))  # 로그인하지 않은 사용자는 로그인 페이지로 이동
-    if session["role"] != "admin":
-        flash("삭제 권한이 없습니다!", "danger")
-        return redirect(url_for("index"))  # 관리자만 삭제 가능
+    if "role" not in session or session["role"] != "admin":
+        flash("권한이 없습니다.", "danger")
+        return redirect(url_for("index"))
 
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
@@ -362,6 +359,7 @@ def index():
     cursor = conn.cursor()
     cursor.execute('SELECT item_code, item_name, description, unit_size, color, weight, dosage, remark FROM products ORDER BY item_code ASC')
     products = cursor.fetchall()
+    products = [(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7] if p[7] is not None else '') for p in products]
 
     product_categories = {}
     for product in products:

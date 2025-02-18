@@ -130,6 +130,28 @@
             overflow-x: hidden;
             z-index: 1000;
         }
+
+        /* 클레임 필드 가로 배열 스타일 */
+        .claim-fields {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center; /* 수직 정렬 추가 */
+        }
+
+        .claim-fields .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .claim-fields .form-group label {
+            margin-bottom: 2px;
+        }
+
+        .claim-fields .form-group input {
+            width: auto;
+            min-width: 150px;
+        }
     </style>
 </head>
 

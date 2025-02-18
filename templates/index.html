@@ -51,15 +51,14 @@
 
         .tooltip .tooltiptext {
             visibility: hidden;
-            width: 250px;
+            width: 400px; /* 더 넓은 공간을 제공 */
             background-color: #333;
             color: #fff;
-            text-align: left;
+            text-align: center; /* 텍스트 가운데 정렬 */
             border-radius: 6px;
             padding: 5px;
             position: absolute;
             z-index: 1000;
-            /* 다른 요소 위에 표시 */
             bottom: 125%;
             left: 50%;
             transform: translateX(-50%);
@@ -194,13 +193,14 @@
             border-collapse: collapse;
             margin-top: 10px;
             color: white;
+            text-align: center; /* 표 안의 내용을 가운데 정렬 */
         }
 
         .tooltip .tooltiptext table th,
         .tooltip .tooltiptext table td {
             border: 1px solid #ddd;
             padding: 5px;
-            text-align: left;
+            text-align: center; /* th, td 안의 텍스트를 가운데 정렬 */
             color: white;
         }
 
@@ -345,10 +345,76 @@
             width: 5%;
             text-align: center;
         }
+
+        /* 상단 바 스타일 */
+        .top-bar {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-bar-title {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .top-bar a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+
+        .top-bar a:hover {
+            text-decoration: underline;
+        }
+
+        .top-bar-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .top-bar-info span {
+            margin-right: 10px;
+        }
+
+        /* 로그아웃 버튼 스타일 */
+        .logout-button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 5px 10px;
+            text-decoration: none;
+        }
+
+        .logout-button:hover {
+            background-color: #d32f2f;
+        }
     </style>
 </head>
 
 <body>
+    <div class="top-bar">
+        <div class="top-bar-title">
+            
+        </div>
+        <div class="top-bar-info">
+            <span>
+                {% if session['role'] == 'admin' %}
+                    관리자
+                {% elif session['role'] == 'viewer' %}
+                    열람 전용
+                {% endif %}
+            </span>
+            <a href="{{ url_for('logout') }}" class="logout-button">로그아웃</a>
+        </div>
+    </div>
+
     <h1>USP Product List</h1>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -396,6 +462,7 @@
                         <input type="text" name="claim_description[]" class="claim-description-input" placeholder="Claim Description">
                         <input type="number" name="claim_concentration[]" placeholder="Claim Concentration">
                         <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)">
+                        <button type="button
                         <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
                     </div>
                 {% endif %}
@@ -467,7 +534,7 @@
                                         </table>
                                     </span>
                                 </div>
-                                {% if product[7] %}
+                                {% if product[7] is not none and product[7] != 'None' and product[7]|trim != '' %}
                                     <div class="tooltip remark-tooltip" data-container="body">
                                         <span><i class="fas fa-exclamation-circle exclamation-icon"></i></span>
                                         <span class="tooltiptext">
