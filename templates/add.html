@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,14 +14,17 @@
             margin: 20px;
             line-height: 1.6;
         }
+
         .form-group {
             margin-bottom: 15px;
         }
+
         label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
         }
+
         input[type="text"],
         input[type="number"],
         textarea {
@@ -31,16 +35,19 @@
             box-sizing: border-box;
             font-size: 14px;
         }
+
         textarea {
             resize: vertical;
             min-height: 100px;
         }
+
         .claims-container {
             margin-top: 20px;
             background-color: #f5f5f5;
             padding: 15px;
             border-radius: 5px;
         }
+
         .claim {
             border: 1px solid #ddd;
             padding: 15px;
@@ -48,9 +55,33 @@
             border-radius: 4px;
             background-color: #ffffff;
         }
-        .claim .form-group {
+
+        /* 클레임 필드 가로 배열 스타일 */
+        .claim-fields {
+            display: flex;
+            gap: 10px;
             margin-bottom: 10px;
+            align-items: center;
+            position: relative;
+            padding-right: 80px; /* Remove 버튼을 위한 공간 확보 */
         }
+
+        .claim-fields .form-group {
+            margin-bottom: 0;
+        }
+
+        .claim-fields .form-group label {
+            margin-bottom: 2px;
+        }
+
+        .claim-fields .form-group input {
+            width: 300px;
+        }
+
+        .claim-fields .form-group input[type="number"] {
+            width: 150px;
+        }
+
         .remove-claim {
             background-color: #f44336;
             color: white;
@@ -59,7 +90,9 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
+            margin-left: 20px;
         }
+
         .add-claim {
             background-color: #4CAF50;
             color: white;
@@ -70,6 +103,7 @@
             margin-bottom: 20px;
             font-size: 14px;
         }
+
         button {
             background-color: #5cb85c;
             color: white;
@@ -79,36 +113,44 @@
             cursor: pointer;
             font-size: 16px;
         }
+
         button:hover {
             background-color: #4cae4c;
         }
+
         a {
             color: #337ab7;
             text-decoration: none;
             margin-left: 10px;
         }
+
         a:hover {
             text-decoration: underline;
         }
+
         .error {
             color: #f44336;
             margin-top: 5px;
         }
+
         .message {
             margin-top: 20px;
             padding: 10px;
             border-radius: 5px;
         }
+
         .success {
             background-color: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
         }
+
         .error {
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
         .ui-autocomplete {
             max-height: 200px;
             overflow-y: auto;
@@ -117,17 +159,18 @@
         }
     </style>
 </head>
+
 <body>
     <h1>Add Product</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="message {{ category }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="message {{ category }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
     {% endwith %}
 
     <form method="post">
@@ -163,24 +206,26 @@
             <label for="remark">Remark:</label>
             <textarea id="remark" name="remark" rows="4"></textarea>
         </div>
-
         <div class="claims-container">
             <h3>Claims</h3>
             <div id="claims">
                 <div class="claim">
-                    <div class="form-group">
-                        <label for="claim_main_0">Main Claim:</label>
-                        <input type="text" id="claim_main_0" name="claim_main[]" class="claim-main-input">
+                    <div class="claim-fields">
+                        <div class="form-group">
+                            <label for="claim_main_0">Main Claim:</label>
+                            <input type="text" id="claim_main_0" name="claim_main[]" class="claim-main-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="claim_description_0">Claim Description:</label>
+                            <input type="text" id="claim_description_0" name="claim_description[]"
+                                class="claim-description-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="claim_concentration_0">Claim Concentration:</label>
+                            <input type="number" id="claim_concentration_0" name="claim_concentration[]" step="any">
+                        </div>
+                        <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
                     </div>
-                    <div class="form-group">
-                        <label for="claim_description_0">Claim Description:</label>
-                        <input type="text" id="claim_description_0" name="claim_description[]" class="claim-description-input">
-                    </div>
-                    <div class="form-group">
-                        <label for="claim_concentration_0">Claim Concentration:</label>
-                        <input type="number" id="claim_concentration_0" name="claim_concentration[]" step="any">
-                    </div>
-                    <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
                 </div>
             </div>
             <button type="button" class="add-claim" onclick="addClaim()">Add Claim</button>
@@ -191,23 +236,23 @@
     </form>
 
     <script>
-        $(function () {
+        $(function() {
             function initClaimDescriptionAutocomplete(element, mainClaimValue) {
                 $(element).autocomplete({
-                    source: function (request, response) {
+                    source: function(request, response) {
                         $.getJSON("/autocomplete", {
                             query: request.term,
                             field: 'claim_description',
                             main_claim: mainClaimValue
-                        }, function (data) {
+                        }, function(data) {
                             response(data);
                         });
                     },
                     minLength: 0,
-                    select: function (event, ui) {
+                    select: function(event, ui) {
                         $(this).val(ui.item.value);
                     }
-                }).on('focus', function () {
+                }).on('focus', function() {
                     $(this).autocomplete("search", "");
                 });
             }
@@ -217,22 +262,22 @@
                 var claimDescriptionInput = $(claimRow).find('.claim-description-input');
 
                 mainClaimInput.autocomplete({
-                    source: function (request, response) {
+                    source: function(request, response) {
                         $.getJSON("/autocomplete", {
                             query: request.term,
                             field: 'claim_main'
-                        }, function (data) {
+                        }, function(data) {
                             response(data);
                         });
                     },
                     minLength: 1,
-                    select: function (event, ui) {
+                    select: function(event, ui) {
                         $(this).val(ui.item.value);
                         initClaimDescriptionAutocomplete(claimDescriptionInput, ui.item.value);
                     }
                 });
 
-                mainClaimInput.on('autocompletechange', function (event, ui) {
+                mainClaimInput.on('autocompletechange', function(event, ui) {
                     var mainClaimValue = ui.item ? ui.item.value : $(this).val();
                     initClaimDescriptionAutocomplete(claimDescriptionInput, mainClaimValue);
                 });
@@ -242,33 +287,36 @@
 
             initClaimRow($('#claims .claim').first());
 
-            window.addClaim = function () {
+            window.addClaim = function() {
                 var claimsContainer = document.getElementById('claims');
                 var newClaim = document.createElement('div');
                 newClaim.className = 'claim';
                 newClaim.innerHTML = `
-                    <div class="form-group">
-                        <label>Main Claim:</label>
-                        <input type="text" name="claim_main[]" class="claim-main-input">
+                    <div class="claim-fields">
+                        <div class="form-group">
+                            <label>Main Claim:</label>
+                            <input type="text" name="claim_main[]" class="claim-main-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Claim Description:</label>
+                            <input type="text" name="claim_description[]" class="claim-description-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Claim Concentration:</label>
+                            <input type="number" name="claim_concentration[]" step="any">
+                        </div>
+                        <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
                     </div>
-                    <div class="form-group">
-                        <label>Claim Description:</label>
-                        <input type="text" name="claim_description[]" class="claim-description-input">
-                    </div>
-                    <div class="form-group">
-                        <label>Claim Concentration:</label>
-                        <input type="number" name="claim_concentration[]" step="any">
-                    </div>
-                    <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
                 `;
                 claimsContainer.appendChild(newClaim);
                 initClaimRow(newClaim);
             };
 
-            window.removeClaim = function (element) {
+            window.removeClaim = function(element) {
                 $(element).closest('.claim').remove();
             };
         });
     </script>
 </body>
+
 </html>

@@ -69,6 +69,7 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
+            margin-left: 20px;
         }
 
         .add-claim {
@@ -131,16 +132,16 @@
             z-index: 1000;
         }
 
-        /* 클레임 필드 가로 배열 스타일 */
         .claim-fields {
             display: flex;
             gap: 10px;
             margin-bottom: 10px;
-            align-items: center; /* 수직 정렬 추가 */
+            align-items: center;
+            position: relative;
+            padding-right: 80px;
         }
 
         .claim-fields .form-group {
-            flex: 1;
             margin-bottom: 0;
         }
 
@@ -149,8 +150,11 @@
         }
 
         .claim-fields .form-group input {
-            width: auto;
-            min-width: 150px;
+            width: 300px;
+        }
+
+        .claim-fields .form-group input[type="number"] {
+            width: 150px;
         }
     </style>
 </head>
@@ -209,21 +213,26 @@
             <div id="claims">
                 {% for claim in claims %}
                 <div class="claim">
-                    <div class="form-group">
-                        <label>Main Claim:</label>
-                        <input type="text" name="claim_main[]" class="claim-main-input" value="{{ claim[0] }}" {% if role=="viewer" %}readonly class="readonly" {% endif %}>
+                    <div class="claim-fields">
+                        <div class="form-group">
+                            <label>Main Claim:</label>
+                            <input type="text" name="claim_main[]" class="claim-main-input"
+                                value="{{ claim[0] }}" {% if role=="viewer" %}readonly class="readonly" {% endif %}>
+                        </div>
+                        <div class="form-group">
+                            <label>Claim Description:</label>
+                            <input type="text" name="claim_description[]" class="claim-description-input"
+                                value="{{ claim[1] }}" {% if role=="viewer" %}readonly class="readonly" {% endif %}>
+                        </div>
+                        <div class="form-group">
+                            <label>Claim Concentration:</label>
+                            <input type="number" name="claim_concentration[]" step="any" value="{{ claim[2] }}"
+                                {% if role=="viewer" %}readonly class="readonly" {% endif %}>
+                        </div>
+                        {% if role == "admin" %}
+                        <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
+                        {% endif %}
                     </div>
-                    <div class="form-group">
-                        <label>Claim Description:</label>
-                        <input type="text" name="claim_description[]" class="claim-description-input" value="{{ claim[1] }}" {% if role=="viewer" %}readonly class="readonly" {% endif %}>
-                    </div>
-                    <div class="form-group">
-                        <label>Claim Concentration:</label>
-                        <input type="number" name="claim_concentration[]" step="any" value="{{ claim[2] }}" {% if role=="viewer" %}readonly class="readonly" {% endif %}>
-                    </div>
-                    {% if role == "admin" %}
-                    <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
-                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
@@ -239,24 +248,22 @@
     </form>
 
     <script>
-        $(function () {
+        $(function() {
             function initClaimDescriptionAutocomplete(element, mainClaimValue) {
                 $(element).autocomplete({
-                    source: function (request, response) {
+                    source: function(request, response) {
                         $.getJSON("/autocomplete", {
-                            query: request.term,
                             field: 'claim_description',
                             main_claim: mainClaimValue
-                        }, function (data) {
+                        }, function(data) {
                             response(data);
                         });
                     },
-                    minLength: 0, // 사용자가 입력하지 않아도 자동 완성 목록이 표시되도록 설정
-                    select: function (event, ui) {
+                    minLength: 0,
+                    select: function(event, ui) {
                         $(this).val(ui.item.value);
                     }
-                }).on('focus', function () {
-                    // focus 이벤트에서 자동 완성 팝업을 엽니다.
+                }).focus(function() {
                     $(this).autocomplete("search", "");
                 });
             }
@@ -265,65 +272,59 @@
                 var mainClaimInput = $(claimRow).find('.claim-main-input');
                 var claimDescriptionInput = $(claimRow).find('.claim-description-input');
 
-                // Main Claim 자동 완성 초기화
                 mainClaimInput.autocomplete({
-                    source: function (request, response) {
+                    source: function(request, response) {
                         $.getJSON("/autocomplete", {
                             query: request.term,
                             field: 'claim_main'
-                        }, function (data) {
+                        }, function(data) {
                             response(data);
                         });
                     },
                     minLength: 1,
-                    select: function (event, ui) {
+                    select: function(event, ui) {
                         $(this).val(ui.item.value);
-                        // Main Claim이 선택되면 Description 자동 완성 업데이트
                         initClaimDescriptionAutocomplete(claimDescriptionInput, ui.item.value);
                     }
                 });
 
-                // Main Claim이 변경될 때 Description 자동 완성 업데이트
-                mainClaimInput.on('autocompletechange', function (event, ui) {
-                    var mainClaimValue = ui.item ? ui.item.value : $(this).val();
-                    initClaimDescriptionAutocomplete(claimDescriptionInput, mainClaimValue);
+                mainClaimInput.on('change', function() {
+                    initClaimDescriptionAutocomplete(claimDescriptionInput, $(this).val());
                 });
 
-                // Description 자동 완성 초기화 (초기 Main Claim 값을 사용하여)
                 initClaimDescriptionAutocomplete(claimDescriptionInput, mainClaimInput.val());
             }
 
-            // 기존 Claim Row에 자동 완성 기능 추가
-            $('#claims .claim').each(function () {
+            $('#claims .claim').each(function() {
                 initClaimRow(this);
             });
 
-            // Add Claim 함수 수정
-            window.addClaim = function () {
+            window.addClaim = function() {
                 var claimsContainer = document.getElementById('claims');
                 var newClaim = document.createElement('div');
                 newClaim.className = 'claim';
                 newClaim.innerHTML = `
-                    <div class="form-group">
-                        <label>Main Claim:</label>
-                        <input type="text" name="claim_main[]" class="claim-main-input">
+                    <div class="claim-fields">
+                        <div class="form-group">
+                            <label>Main Claim:</label>
+                            <input type="text" name="claim_main[]" class="claim-main-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Claim Description:</label>
+                            <input type="text" name="claim_description[]" class="claim-description-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Claim Concentration:</label>
+                            <input type="number" name="claim_concentration[]" step="any">
+                        </div>
+                        <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
                     </div>
-                    <div class="form-group">
-                        <label>Claim Description:</label>
-                        <input type="text" name="claim_description[]" class="claim-description-input">
-                    </div>
-                    <div class="form-group">
-                        <label>Claim Concentration:</label>
-                        <input type="number" name="claim_concentration[]" step="any">
-                    </div>
-                    <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
                 `;
                 claimsContainer.appendChild(newClaim);
-                initClaimRow(newClaim); // 자동 완성 기능 초기화
+                initClaimRow(newClaim);
             };
 
-            // Remove Claim 함수
-            window.removeClaim = function (element) {
+            window.removeClaim = function(element) {
                 $(element).closest('.claim').remove();
             };
         });
