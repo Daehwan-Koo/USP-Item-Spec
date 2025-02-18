@@ -112,9 +112,6 @@ def autocomplete():
     field = request.args.get("field", "claim_main")
     main_claim = request.args.get("main_claim", "")
 
-    if not query and field != "claim_description":
-        return jsonify([])
-
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
 
@@ -131,23 +128,23 @@ def autocomplete():
             cursor.execute('''
                 SELECT DISTINCT claim_description 
                 FROM claims
-                WHERE claim_main = ? AND claim_description LIKE ?
+                WHERE claim_main = ?
                 ORDER BY claim_description ASC
                 LIMIT 10
-            ''', (main_claim, '%' + query + '%'))
+            ''', (main_claim,))
         else:
             cursor.execute('''
                 SELECT DISTINCT claim_description 
                 FROM claims
-                WHERE claim_description LIKE ?
                 ORDER BY claim_description ASC
                 LIMIT 10
-            ''', ('%' + query + '%',))
+            ''')
 
     suggestions = [row[0] for row in cursor.fetchall()]
     conn.close()
 
     return jsonify(suggestions)
+
 
 
 @app.route('/add', methods=['GET', 'POST'])

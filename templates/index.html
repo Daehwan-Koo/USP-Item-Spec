@@ -351,69 +351,53 @@
 <body>
     <h1>USP Product List</h1>
     {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    {% for category, message in messages %}
-    <div class="message {{ category }}">
-        {{ message }}
-    </div>
-    {% endfor %}
-    {% endif %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="message {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
     {% endwith %}
     <a href="{{ url_for('add_product') }}"><button class="green-button">Add Product</button></a>
     <h2>Product Search</h2>
     <form action="{{ url_for('search_products') }}" method="GET" class="search-form">
         <div class="search-fields">
-            <input type="text" name="item_code" placeholder="Item Code"
-                value="{{ search_filters.get('item_code', '') }}">
-            <input type="text" id="item_name" name="item_name" placeholder="Item Name"
-                value="{{ search_filters.get('item_name', '') }}">
-            <input type="text" name="description" placeholder="Description"
-                value="{{ search_filters.get('description', '') }}">
-            <input type="text" name="unit_size" placeholder="Unit Size"
-                value="{{ search_filters.get('unit_size', '') }}">
+            <input type="text" name="item_code" placeholder="Item Code" value="{{ search_filters.get('item_code', '') }}">
+            <input type="text" id="item_name" name="item_name" placeholder="Item Name" value="{{ search_filters.get('item_name', '') }}">
+            <input type="text" name="description" placeholder="Description" value="{{ search_filters.get('description', '') }}">
+            <input type="text" name="unit_size" placeholder="Unit Size" value="{{ search_filters.get('unit_size', '') }}">
             <input type="text" name="color" placeholder="Color" value="{{ search_filters.get('color', '') }}">
             <input type="number" name="weight" placeholder="Weight (mg)" value="{{ search_filters.get('weight', '') }}">
-            <input type="number" name="weight_tolerance" placeholder="Weight Tolerance (%)"
-                value="{{ search_filters.get('weight_tolerance', '') }}">
+            <input type="number" name="weight_tolerance" placeholder="Weight Tolerance (%)" value="{{ search_filters.get('weight_tolerance', '') }}">
             <select name="product_type">
                 <option value="">All Types</option>
-                <option value="Tablet" {% if search_filters.get('product_type')=='Tablet' %}selected{% endif %}>Tablet
-                </option>
-                <option value="Softgel" {% if search_filters.get('product_type')=='Softgel' %}selected{% endif %}>
-                    Softgel</option>
-                <option value="HardCapsule" {% if search_filters.get('product_type')=='HardCapsule' %}selected{% endif
-                    %}>HardCapsule</option>
-                <option value="Sachet" {% if search_filters.get('product_type')=='Sachet' %}selected{% endif %}>Sachet
-                </option>
-                <option value="Powder" {% if search_filters.get('product_type')=='Powder' %}selected{% endif %}>Powder
-                </option>
-                <option value="Liquid" {% if search_filters.get('product_type')=='Liquid' %}selected{% endif %}>Liquid
-                </option>
+                <option value="Tablet" {% if search_filters.get('product_type')=='Tablet' %}selected{% endif %}>Tablet</option>
+                <option value="Softgel" {% if search_filters.get('product_type')=='Softgel' %}selected{% endif %}>Softgel</option>
+                <option value="HardCapsule" {% if search_filters.get('product_type')=='HardCapsule' %}selected{% endif %}>HardCapsule</option>
+                <option value="Sachet" {% if search_filters.get('product_type')=='Sachet' %}selected{% endif %}>Sachet</option>
+                <option value="Powder" {% if search_filters.get('product_type')=='Powder' %}selected{% endif %}>Powder</option>
+                <option value="Liquid" {% if search_filters.get('product_type')=='Liquid' %}selected{% endif %}>Liquid</option>
             </select>
             <div id="claim-search-container">
                 {% if search_filters.get('claim_main') %}
-                {% for i in range(search_filters['claim_main']|length) %}
-                <div class="claim-search-row">
-                    <input type="text" name="claim_main[]" class="claim-main-input" placeholder="Claim Main"
-                        value="{{ search_filters['claim_main'][i] }}">
-                    <input type="text" name="claim_description[]" placeholder="Claim Description"
-                        value="{{ search_filters['claim_description'][i] }}">
-                    <input type="number" name="claim_concentration[]" placeholder="Claim Concentration"
-                        value="{{ search_filters['claim_concentration'][i] }}">
-                    <input type="number" name="claim_concentration_tolerance[]"
-                        placeholder="Claim Tolerance (%)"
-                        value="{{ search_filters.get('claim_concentration_tolerance', [])[i] | default('') }}">
-                    <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
-                </div>
-                {% endfor %}
+                    {% for i in range(search_filters['claim_main']|length) %}
+                        <div class="claim-search-row">
+                            <input type="text" name="claim_main[]" class="claim-main-input" placeholder="Claim Main" value="{{ search_filters['claim_main'][i] }}">
+                            <input type="text" name="claim_description[]" class="claim-description-input" placeholder="Claim Description" value="{{ search_filters['claim_description'][i] }}">
+                            <input type="number" name="claim_concentration[]" placeholder="Claim Concentration" value="{{ search_filters['claim_concentration'][i] }}">
+                            <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)" value="{{ search_filters.get('claim_concentration_tolerance', [])[i] | default('') }}">
+                            <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
+                        </div>
+                    {% endfor %}
                 {% else %}
-                <div class="claim-search-row">
-                    <input type="text" name="claim_main[]" class="claim-main-input" placeholder="Claim Main">
-                    <input type="text" name="claim_description[]" placeholder="Claim Description">
-                    <input type="number" name="claim_concentration[]" placeholder="Claim Concentration">
-                    <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)">
-                    <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
-                </div>
+                    <div class="claim-search-row">
+                        <input type="text" name="claim_main[]" class="claim-main-input" placeholder="Claim Main">
+                        <input type="text" name="claim_description[]" class="claim-description-input" placeholder="Claim Description">
+                        <input type="number" name="claim_concentration[]" placeholder="Claim Concentration">
+                        <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)">
+                        <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
+                    </div>
                 {% endif %}
             </div>
             <div class="add-claim-search-container">
@@ -444,75 +428,97 @@
             </thead>
             <tbody>
                 {% for product in products %}
-                <tr>
-                    <td style="text-align: center;">
-                        {% if product_categories and product[0] in product_categories %}
-                        <span class="product-type">{{ product_categories[product[0]] }}</span>
-                        {% else %}
-                        <span>Unknown</span>
-                        {% endif %}
-                    </td>
-                    <td style="text-align: center;">{{ product[0] }}</td>
-                    <td>{{ product[1]|wordwrap(60)|replace('\n', '<br>')|safe }}</td>
-                    <td>{{ product[2]|wordwrap(60)|replace('\n', '<br>')|safe }}</td>
-                    <td style="text-align: center;">{{ product[3] }}</td>
-                    <td style="text-align: center;">{{ product[4] }}</td>
-                    <td style="text-align: center;">{{ product[5] }}</td>
-                    <td style="text-align: center;">
-                        <div class="info-icons">
-                            <div class="tooltip claim-tooltip" data-container="body">
-                                <span><i class="fas fa-star star-icon"></i></span>
-                                <span class="tooltiptext">
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Main</th>
-                                                <th>Description</th>
-                                                <th>Conc. (mg)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for claim in product_claims.get(product[0], []) %}
-                                            <tr>
-                                                <td>{{ claim[0] }}</td>
-                                                <td>{{ claim[1] }}</td>
-                                                <td>{{ claim[2] }}</td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </span>
-                            </div>
-                            {% if product[7] %}
-                            <div class="tooltip remark-tooltip" data-container="body">
-                                <span><i class="fas fa-exclamation-circle exclamation-icon"></i></span>
-                                <span class="tooltiptext">
-                                    <b>Remark:</b> {{ product[7] }}
-                                </span>
-                            </div>
+                    <tr>
+                        <td style="text-align: center;">
+                            {% if product_categories and product[0] in product_categories %}
+                                <span class="product-type">{{ product_categories[product[0]] }}</span>
+                            {% else %}
+                                <span>Unknown</span>
                             {% endif %}
-                        </div>
-                    </td>
-                    <td>
-                        <a href="{{ url_for('edit_product', item_code=product[0]) }}" class="edit-button">Edit</a>
-                        <a href="{{ url_for('delete_product', item_code=product[0]) }}" class="delete-button">Delete</a>
-                    </td>
-                    <td>
-                        <input type="checkbox" name="compare" value="{{ product[0] }}">
-                    </td>
-                </tr>
+                        </td>
+                        <td style="text-align: center;">{{ product[0] }}</td>
+                        <td>{{ product[1]|wordwrap(60)|replace('\n', '<br>')|safe }}</td>
+                        <td>{{ product[2]|wordwrap(60)|replace('\n', '<br>')|safe }}</td>
+                        <td style="text-align: center;">{{ product[3] }}</td>
+                        <td style="text-align: center;">{{ product[4] }}</td>
+                        <td style="text-align: center;">{{ product[5] }}</td>
+                        <td style="text-align: center;">
+                            <div class="info-icons">
+                                <div class="tooltip claim-tooltip" data-container="body">
+                                    <span><i class="fas fa-star star-icon"></i></span>
+                                    <span class="tooltiptext">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Main</th>
+                                                    <th>Description</th>
+                                                    <th>Conc. (mg)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for claim in product_claims.get(product[0], []) %}
+                                                    <tr>
+                                                        <td>{{ claim[0] }}</td>
+                                                        <td>{{ claim[1] }}</td>
+                                                        <td>{{ claim[2] }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </span>
+                                </div>
+                                {% if product[7] %}
+                                    <div class="tooltip remark-tooltip" data-container="body">
+                                        <span><i class="fas fa-exclamation-circle exclamation-icon"></i></span>
+                                        <span class="tooltiptext">
+                                            <b>Remark:</b> {{ product[7] }}
+                                        </span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('edit_product', item_code=product[0]) }}" class="edit-button">Edit</a>
+                            <a href="{{ url_for('delete_product', item_code=product[0]) }}" class="delete-button">Delete</a>
+                        </td>
+                        <td>
+                            <input type="checkbox" name="compare" value="{{ product[0] }}">
+                        </td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>
     </form>
     <script>
         $(function() {
-            // Claim Main 자동완성
-            $(document).on('focus', '.claim-main-input', function() {
-                $(this).autocomplete({
+            function initClaimDescriptionAutocomplete(element, mainClaimValue) {
+                $(element).autocomplete({
                     source: function(request, response) {
                         $.getJSON("/autocomplete", {
-                            query: request.term
+                            field: 'claim_description',
+                            main_claim: mainClaimValue
+                        }, function(data) {
+                            response(data);
+                        });
+                    },
+                    minLength: 0,
+                    select: function(event, ui) {
+                        $(this).val(ui.item.value);
+                    }
+                }).focus(function() {
+                    $(this).autocomplete("search", "");
+                });
+            }
+
+            function initClaimRow(claimRow) {
+                var mainClaimInput = $(claimRow).find('.claim-main-input');
+                var claimDescriptionInput = $(claimRow).find('.claim-description-input');
+
+                mainClaimInput.autocomplete({
+                    source: function(request, response) {
+                        $.getJSON("/autocomplete", {
+                            query: request.term,
+                            field: 'claim_main'
                         }, function(data) {
                             response(data);
                         });
@@ -520,17 +526,53 @@
                     minLength: 1,
                     select: function(event, ui) {
                         $(this).val(ui.item.value);
-                        // 선택 시 추가 작업이 필요하면 여기에 구현
+                        initClaimDescriptionAutocomplete(claimDescriptionInput, ui.item.value);
                     }
                 });
+
+                mainClaimInput.on('change', function() {
+                    initClaimDescriptionAutocomplete(claimDescriptionInput, $(this).val());
+                });
+
+                initClaimDescriptionAutocomplete(claimDescriptionInput, mainClaimInput.val());
+            }
+
+            // 기존 클레임 행에 자동완성 적용
+            $('.claim-search-row').each(function() {
+                initClaimRow(this);
             });
 
-             // Item Name 자동완성
+            // 새로운 클레임 행 추가 함수 수정
+            window.addClaimSearch = function() {
+                const container = document.getElementById('claim-search-container');
+                const newClaimRow = document.createElement('div');
+                newClaimRow.className = 'claim-search-row';
+                newClaimRow.innerHTML = `
+                    <input type="text" name="claim_main[]" class="claim-main-input" placeholder="Claim Main">
+                    <input type="text" name="claim_description[]" class="claim-description-input" placeholder="Claim Description">
+                    <input type="number" name="claim_concentration[]" placeholder="Claim Concentration">
+                    <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)">
+                    <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
+                `;
+                container.appendChild(newClaimRow);
+                initClaimRow(newClaimRow);
+            };
+
+            // 기존 함수들 유지
+            window.removeClaimSearch = function(button) {
+                button.closest('.claim-search-row').remove();
+            };
+
+            window.submitCompareForm = function() {
+                document.getElementById('compare-form').submit();
+            };
+
+            // Item Name 자동완성 (기존 코드 유지)
             $("#item_name").autocomplete({
                 source: function(request, response) {
                     $.getJSON("/autocomplete", {
                         query: request.term,
-                        field: 'item_name' // 필드 지정
+                        field: 'item_name'
                     }, function(data) {
                         response(data);
                     });
@@ -538,48 +580,9 @@
                 minLength: 1,
                 select: function(event, ui) {
                     $("#item_name").val(ui.item.value);
-                    // 선택 시 추가 작업이 필요하면 여기에 구현
                 }
             });
         });
-
-        function addClaimSearch() {
-            const container = document.getElementById('claim-search-container');
-            const newClaimRow = document.createElement('div');
-            newClaimRow.className = 'claim-search-row';
-            newClaimRow.innerHTML = `
-                <input type="text" name="claim_main[]" class="claim-main-input" placeholder="Claim Main">
-                <input type="text" name="claim_description[]" placeholder="Claim Description">
-                <input type="number" name="claim_concentration[]" placeholder="Claim Concentration">
-                <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)">
-                <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
-            `;
-            container.appendChild(newClaimRow);
-
-            // 추가된 행에 자동완성 기능 적용
-            $(newClaimRow).find('.claim-main-input').autocomplete({
-                source: function(request, response) {
-                    $.getJSON("/autocomplete", {
-                        query: request.term
-                    }, function(data) {
-                        response(data);
-                    });
-                },
-                minLength: 1,
-                select: function(event, ui) {
-                    $(this).val(ui.item.value);
-                    // 선택 시 추가 작업이 필요하면 여기에 구현
-                }
-            });
-        }
-
-        function removeClaimSearch(button) {
-            button.closest('.claim-search-row').remove();
-        }
-
-        function submitCompareForm() {
-            document.getElementById('compare-form').submit();
-        }
     </script>
 </body>
 
