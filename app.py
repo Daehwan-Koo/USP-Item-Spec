@@ -91,17 +91,19 @@ def migrate_products():
 
 def categorize_item_code(item_code):
     """아이템 코드를 해석하여 제품 유형을 반환"""
-    if "TB" in item_code:
+    if "-TB-" in item_code:
         return "Tablet"
-    elif "SG" in item_code:
+    elif "-SG-" in item_code:
         return "Softgel"
-    elif "HC" in item_code:
+    elif "-HC-" in item_code:
         return "Hard Capsule"
-    elif "SH" in item_code:
+    elif "-SH-" in item_code:
         return "Sachet"
-    elif "PW" in item_code:
+    elif "-PW-" in item_code:
         return "Powder"
-    elif "LQ" in item_code:
+    elif "-LQ-" in item_code:
+        return "Liquid"
+    elif "-PH-" in item_code:
         return "Liquid"
     else:
         return None
