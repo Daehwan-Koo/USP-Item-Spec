@@ -123,11 +123,35 @@
     <form method="post">
         <div class="form-group">
             <label for="item_code">Item Code:</label>
-            <input type="text" id="item_code" name="item_code" value="{{ product[1] }}" readonly class="readonly">
+            <input type="text" id="item_code" name="item_code" value="{{ product[1] }}" readonly>
         </div>
         <div class="form-group">
             <label for="item_name">Item Name:</label>
-            <input type="text" id="item_name" name="item_name" value="{{ product[2] }}" {% if role == "viewer" %}readonly class="readonly"{% endif %}>
+            <input type="text" id="item_name" name="item_name" value="{{ product[2] }}">
+        </div>
+        <div class="form-group">
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description" value="{{ product[3] }}">
+        </div>
+        <div class="form-group">
+            <label for="unit_size">Unit Size:</label>
+            <input type="text" id="unit_size" name="unit_size" value="{{ product[4] }}">
+        </div>
+        <div class="form-group">
+            <label for="color">Color:</label>
+            <input type="text" id="color" name="color" value="{{ product[5] }}">
+        </div>
+        <div class="form-group">
+            <label for="weight">Weight (mg):</label>
+            <input type="number" id="weight" name="weight" step="any" value="{{ product[6] }}">
+        </div>
+        <div class="form-group">
+            <label for="dosage">Dosage:</label>
+            <input type="text" id="dosage" name="dosage" value="{{ product[7] }}">
+        </div>
+        <div class="form-group">
+            <label for="remark">Remark:</label>
+            <textarea id="remark" name="remark" rows="4">{{ product[8] }}</textarea>
         </div>
 
         <div class="claims-container">
@@ -147,9 +171,15 @@
                         <label>Claim Concentration:</label>
                         <input type="number" name="claim_concentration[]" step="any" value="{{ claim[2] }}" {% if role == "viewer" %}readonly class="readonly"{% endif %}>
                     </div>
+                    {% if role == "admin" %}
+                        <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
+            {% if role == "admin" %}
+                <button type="button" class="add-claim" onclick="addClaim()">Add Claim</button>
+            {% endif %}
         </div>
 
         {% if role == "admin" %}
@@ -157,5 +187,33 @@
         {% endif %}
         <a href="{{ url_for('index') }}">Cancel</a>
     </form>
+
+    <script>
+        function addClaim() {
+            let claimsContainer = document.getElementById('claims');
+            let newClaim = document.createElement('div');
+            newClaim.classList.add('claim');
+            newClaim.innerHTML = `
+                <div class="form-group">
+                    <label>Main Claim:</label>
+                    <input type="text" name="claim_main[]">
+                </div>
+                <div class="form-group">
+                    <label>Claim Description:</label>
+                    <input type="text" name="claim_description[]">
+                </div>
+                <div class="form-group">
+                    <label>Claim Concentration:</label>
+                    <input type="number" name="claim_concentration[]" step="any">
+                </div>
+                <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
+            `;
+            claimsContainer.appendChild(newClaim);
+        }
+
+        function removeClaim(element) {
+            element.parentNode.remove();
+        }
+    </script>
 </body>
 </html>
