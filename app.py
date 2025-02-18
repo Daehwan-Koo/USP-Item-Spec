@@ -202,12 +202,13 @@ def edit_product(item_code):
         return render_template('edit.html', product=product, claims=claims)
 
     elif request.method == 'POST':
-        item_name = request.form['item_name']
-        description = request.form['description']
-        unit_size = request.form['unit_size']
-        color = request.form['color']
-        weight = request.form['weight']
-        dosage = request.form['dosage']
+        # 🔹 수정: request.form.get()을 사용하여 KeyError 방지
+        item_name = request.form.get('item_name', '')
+        description = request.form.get('description', '')  # 🔥 KeyError 발생 방지
+        unit_size = request.form.get('unit_size', '')
+        color = request.form.get('color', '')
+        weight = request.form.get('weight', '')
+        dosage = request.form.get('dosage', '')
         remark = request.form.get('remark', '')
 
         try:
@@ -252,6 +253,7 @@ def edit_product(item_code):
 
         finally:
             conn.close()
+
 
 @app.route('/delete/<item_code>')
 def delete_product(item_code):
