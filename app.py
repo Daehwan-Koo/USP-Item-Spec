@@ -189,15 +189,25 @@ def edit_product(item_code):
     cursor = conn.cursor()
 
     if request.method == 'GET':
+        # 🔹 제품 정보 가져오기
         cursor.execute('SELECT * FROM products WHERE item_code = ?', (item_code,))
         product = cursor.fetchone()
+
+        # 🔹 제품이 없으면 오류 방지 및 처리
+        if not product:
+            flash("해당 제품을 찾을 수 없습니다.", "danger")
+            conn.close()
+            return redirect(url_for("index"))
+
+        # 🔹 클레임 정보 가져오기 (LEFT JOIN 사용하여 제품이 존재하면 클레임이 없어도 오류 없이 실행)
         cursor.execute('''
             SELECT claim_main, claim_description, claim_concentration
             FROM claims
-            JOIN products ON claims.product_id = products.id
+            LEFT JOIN products ON claims.product_id = products.id
             WHERE products.item_code = ?
         ''', (item_code,))
         claims = cursor.fetchall()
+
         conn.close()
         return render_template('edit.html', product=product, claims=claims)
 
@@ -212,35 +222,38 @@ def edit_product(item_code):
         remark = request.form.get('remark', '')
 
         try:
+            # 🔹 제품 정보 업데이트
             cursor.execute('''
                 UPDATE products SET item_name=?, description=?, unit_size=?, color=?, weight=?, dosage=?, remark=?
                 WHERE item_code=?
             ''', (item_name, description, unit_size, color, weight, dosage, remark, item_code))
 
-            # 기존 클레임 삭제
+            # 🔹 기존 클레임 삭제
             cursor.execute('''
                 DELETE FROM claims
                 WHERE product_id IN (SELECT id FROM products WHERE item_code = ?)
             ''', (item_code,))
 
-            # 새 클레임 추가
+            # 🔹 새 클레임 추가
             claim_mains = request.form.getlist('claim_main[]')
             claim_descriptions = request.form.getlist('claim_description[]')
             claim_concentrations = request.form.getlist('claim_concentration[]')
 
             cursor.execute('SELECT id FROM products WHERE item_code = ?', (item_code,))
-            product_id = cursor.fetchone()[0]
+            product_id = cursor.fetchone()
 
-            for i in range(len(claim_mains)):
-                claim_main = claim_mains[i]
-                claim_description = claim_descriptions[i]
-                claim_concentration = claim_concentrations[i]
+            if product_id:
+                product_id = product_id[0]  # tuple 값 추출
+                for i in range(len(claim_mains)):
+                    claim_main = claim_mains[i]
+                    claim_description = claim_descriptions[i]
+                    claim_concentration = claim_concentrations[i]
 
-                if claim_main and claim_description and claim_concentration:
-                    cursor.execute('''
-                        INSERT INTO claims (product_id, claim_main, claim_description, claim_concentration)
-                        VALUES (?, ?, ?, ?)
-                    ''', (product_id, claim_main, claim_description, claim_concentration))
+                    if claim_main and claim_description and claim_concentration:
+                        cursor.execute('''
+                            INSERT INTO claims (product_id, claim_main, claim_description, claim_concentration)
+                            VALUES (?, ?, ?, ?)
+                        ''', (product_id, claim_main, claim_description, claim_concentration))
 
             conn.commit()
             flash('제품 정보가 수정되었습니다!', 'success')
@@ -253,6 +266,7 @@ def edit_product(item_code):
 
         finally:
             conn.close()
+
 
 
 @app.route('/delete/<item_code>')
