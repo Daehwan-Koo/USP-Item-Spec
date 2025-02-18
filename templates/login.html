@@ -1,63 +1,64 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로그인</title>
+    <title>Login</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
             text-align: center;
-            margin: 50px;
         }
-        .container {
-            width: 300px;
-            margin: 0 auto;
+        .login-container {
+            max-width: 300px;
+            margin: 100px auto;
             padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
             box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
         }
-        input {
-            width: 90%;
+        input[type="password"] {
+            width: 100%;
             padding: 10px;
             margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
         }
         button {
             width: 100%;
             padding: 10px;
-            background-color: #28a745;
+            background-color: #5cb85c;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
+            font-size: 16px;
         }
         button:hover {
-            background-color: #218838;
+            background-color: #4cae4c;
         }
-        .flash-message {
+        .message {
             color: red;
-            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <h2>로그인</h2>
-    <div class="container">
+    <div class="login-container">
+        <h2>Login</h2>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <p class="flash-message">{{ message }}</p>
+                    <p class="message">{{ message }}</p>
                 {% endfor %}
             {% endif %}
         {% endwith %}
-
-        <form method="POST">
-            <label for="password">비밀번호 입력:</label>
-            <input type="password" name="password" required>
-            <button type="submit">로그인</button>
+        
+        <form method="post">
+            <input type="password" name="password" placeholder="Enter Password">
+            <button type="submit">Login</button>
         </form>
     </div>
 </body>
