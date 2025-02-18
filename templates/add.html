@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Product</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -106,6 +109,12 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        .ui-autocomplete {
+            max-height: 200px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -161,11 +170,11 @@
                 <div class="claim">
                     <div class="form-group">
                         <label for="claim_main_0">Main Claim:</label>
-                        <input type="text" id="claim_main_0" name="claim_main[]">
+                        <input type="text" id="claim_main_0" name="claim_main[]" class="claim-main-input">
                     </div>
                     <div class="form-group">
                         <label for="claim_description_0">Claim Description:</label>
-                        <input type="text" id="claim_description_0" name="claim_description[]">
+                        <input type="text" id="claim_description_0" name="claim_description[]" class="claim-description-input">
                     </div>
                     <div class="form-group">
                         <label for="claim_concentration_0">Claim Concentration:</label>
@@ -182,34 +191,84 @@
     </form>
 
     <script>
-        let claimCount = 1;
+        $(function () {
+            function initClaimDescriptionAutocomplete(element, mainClaimValue) {
+                $(element).autocomplete({
+                    source: function (request, response) {
+                        $.getJSON("/autocomplete", {
+                            query: request.term,
+                            field: 'claim_description',
+                            main_claim: mainClaimValue
+                        }, function (data) {
+                            response(data);
+                        });
+                    },
+                    minLength: 0,
+                    select: function (event, ui) {
+                        $(this).val(ui.item.value);
+                    }
+                }).on('focus', function () {
+                    $(this).autocomplete("search", "");
+                });
+            }
 
-        function addClaim() {
-            const claimsContainer = document.getElementById('claims');
-            const newClaim = document.createElement('div');
-            newClaim.classList.add('claim');
-            newClaim.innerHTML = `
-                <div class="form-group">
-                    <label for="claim_main_${claimCount}">Main Claim:</label>
-                    <input type="text" id="claim_main_${claimCount}" name="claim_main[]">
-                </div>
-                <div class="form-group">
-                    <label for="claim_description_${claimCount}">Claim Description:</label>
-                    <input type="text" id="claim_description_${claimCount}" name="claim_description[]">
-                </div>
-                <div class="form-group">
-                    <label for="claim_concentration_${claimCount}">Claim Concentration:</label>
-                    <input type="number" id="claim_concentration_${claimCount}" name="claim_concentration[]" step="any">
-                </div>
-                <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
-            `;
-            claimsContainer.appendChild(newClaim);
-            claimCount++;
-        }
+            function initClaimRow(claimRow) {
+                var mainClaimInput = $(claimRow).find('.claim-main-input');
+                var claimDescriptionInput = $(claimRow).find('.claim-description-input');
 
-        function removeClaim(element) {
-            element.parentNode.remove();
-        }
+                mainClaimInput.autocomplete({
+                    source: function (request, response) {
+                        $.getJSON("/autocomplete", {
+                            query: request.term,
+                            field: 'claim_main'
+                        }, function (data) {
+                            response(data);
+                        });
+                    },
+                    minLength: 1,
+                    select: function (event, ui) {
+                        $(this).val(ui.item.value);
+                        initClaimDescriptionAutocomplete(claimDescriptionInput, ui.item.value);
+                    }
+                });
+
+                mainClaimInput.on('autocompletechange', function (event, ui) {
+                    var mainClaimValue = ui.item ? ui.item.value : $(this).val();
+                    initClaimDescriptionAutocomplete(claimDescriptionInput, mainClaimValue);
+                });
+
+                initClaimDescriptionAutocomplete(claimDescriptionInput, mainClaimInput.val());
+            }
+
+            initClaimRow($('#claims .claim').first());
+
+            window.addClaim = function () {
+                var claimsContainer = document.getElementById('claims');
+                var newClaim = document.createElement('div');
+                newClaim.className = 'claim';
+                newClaim.innerHTML = `
+                    <div class="form-group">
+                        <label>Main Claim:</label>
+                        <input type="text" name="claim_main[]" class="claim-main-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Claim Description:</label>
+                        <input type="text" name="claim_description[]" class="claim-description-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Claim Concentration:</label>
+                        <input type="number" name="claim_concentration[]" step="any">
+                    </div>
+                    <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
+                `;
+                claimsContainer.appendChild(newClaim);
+                initClaimRow(newClaim);
+            };
+
+            window.removeClaim = function (element) {
+                $(element).closest('.claim').remove();
+            };
+        });
     </script>
 </body>
 </html>

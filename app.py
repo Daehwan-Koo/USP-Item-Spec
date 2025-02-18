@@ -1,8 +1,7 @@
 import pandas as pd
 import sqlite3
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
@@ -10,6 +9,13 @@ app.secret_key = "secret_key"
 # ✅ 비밀번호 설정 (이 값을 원하는 값으로 변경)
 ADMIN_PASSWORD = "admin0123"  # 수정 가능
 VIEWER_PASSWORD = "usp0123"  # 수정 불가 (열람 전용)
+
+# 🔹 로그인하지 않으면 모든 페이지에서 로그인 페이지로 강제 이동
+@app.before_request
+def require_login():
+    allowed_routes = ["login", "autocomplete"]  # 자동 완성 라우트 추가
+    if "role" not in session and request.endpoint not in allowed_routes:
+        return redirect(url_for("login"))
 
 EXCEL_FILE_PATH = "DB_Excel.xlsx"
 DB_FILE_PATH = "claims.db"
@@ -99,6 +105,50 @@ def categorize_item_code(item_code):
         return "Liquid"
     else:
         return None
+
+@app.route("/autocomplete", methods=["GET"])
+def autocomplete():
+    query = request.args.get("query", "").strip()
+    field = request.args.get("field", "claim_main")
+    main_claim = request.args.get("main_claim", "")
+
+    if not query and field != "claim_description":
+        return jsonify([])
+
+    conn = sqlite3.connect(DB_FILE_PATH)
+    cursor = conn.cursor()
+
+    if field == 'claim_main':
+        cursor.execute('''
+            SELECT DISTINCT claim_main 
+            FROM claims
+            WHERE claim_main LIKE ?
+            ORDER BY claim_main ASC
+            LIMIT 10
+        ''', ('%' + query + '%',))
+    elif field == 'claim_description':
+        if main_claim:
+            cursor.execute('''
+                SELECT DISTINCT claim_description 
+                FROM claims
+                WHERE claim_main = ? AND claim_description LIKE ?
+                ORDER BY claim_description ASC
+                LIMIT 10
+            ''', (main_claim, '%' + query + '%'))
+        else:
+            cursor.execute('''
+                SELECT DISTINCT claim_description 
+                FROM claims
+                WHERE claim_description LIKE ?
+                ORDER BY claim_description ASC
+                LIMIT 10
+            ''', ('%' + query + '%',))
+
+    suggestions = [row[0] for row in cursor.fetchall()]
+    conn.close()
+
+    return jsonify(suggestions)
+
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_product():
@@ -267,8 +317,6 @@ def edit_product(item_code):
         finally:
             conn.close()
 
-
-
 @app.route('/delete/<item_code>')
 def delete_product(item_code):
     if "role" not in session:
@@ -294,6 +342,22 @@ def delete_product(item_code):
 
     return redirect(url_for('index'))
 
+def categorize_item_code(item_code):
+    """아이템 코드를 해석하여 제품 유형을 반환"""
+    if "TB" in item_code:
+        return "Tablet"
+    elif "SG" in item_code:
+        return "Softgel"
+    elif "HC" in item_code:
+        return "Hard Capsule"
+    elif "SH" in item_code:
+        return "Sachet"
+    elif "PW" in item_code:
+        return "Powder"
+    elif "LQ" in item_code:
+        return "Liquid"
+    else:
+        return None
 
 @app.route('/')
 def index():
@@ -399,7 +463,7 @@ def search_products():
             base_query += f" AND p.item_code LIKE :product_type"
             params["product_type"] = "%LQ%"
 
-   # Claim 필터
+    # Claim 필터
     if "claim_main" in filters or "claim_description" in filters or "claim_concentration" in filters:
         claim_conditions = []
         claim_mains = filters.get("claim_main", [])
@@ -458,8 +522,18 @@ def search_products():
         claims = cursor.fetchall()
         product_claims[product[0]] = claims
 
+    # 자동완성을 위한 데이터 준비
+    cursor.execute('SELECT DISTINCT claim_main FROM claims ORDER BY claim_main ASC')
+    claim_main_options = [row[0] for row in cursor.fetchall()]
+
+    cursor.execute('SELECT DISTINCT item_name FROM products ORDER BY item_name ASC')
+    item_name_options = [row[0] for row in cursor.fetchall()]
+
     conn.close()
-    return render_template('index.html', products=products, product_claims=product_claims, product_categories=product_categories, search_filters=filters)
+
+    return render_template('index.html', products=products, product_claims=product_claims, 
+                           product_categories=product_categories, search_filters=filters,
+                           claim_main_options=claim_main_options, item_name_options=item_name_options)
 
 @app.route('/clear')
 def clear_search():
