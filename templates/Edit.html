@@ -118,6 +118,8 @@
         {% endif %}
     {% endwith %}
 
+    {% set role = session["role"]|default("viewer") %}
+
     <form method="post">
         <div class="form-group">
             <label for="item_code">Item Code:</label>
@@ -125,31 +127,7 @@
         </div>
         <div class="form-group">
             <label for="item_name">Item Name:</label>
-            <input type="text" id="item_name" name="item_name" value="{{ product[2] }}" {% if session["role"] == "viewer" %}readonly class="readonly"{% endif %}>
-        </div>
-        <div class="form-group">
-            <label for="description">Description:</label>
-            <input type="text" id="description" name="description" value="{{ product[3] }}" {% if session["role"] == "viewer" %}readonly class="readonly"{% endif %}>
-        </div>
-        <div class="form-group">
-            <label for="unit_size">Unit Size:</label>
-            <input type="text" id="unit_size" name="unit_size" value="{{ product[4] }}" {% if session["role"] == "viewer" %}readonly class="readonly"{% endif %}>
-        </div>
-        <div class="form-group">
-            <label for="color">Color:</label>
-            <input type="text" id="color" name="color" value="{{ product[5] }}" {% if session["role"] == "viewer" %}readonly class="readonly"{% endif %}>
-        </div>
-        <div class="form-group">
-            <label for="weight">Weight (mg):</label>
-            <input type="number" id="weight" name="weight" step="any" value="{{ product[6] }}" {% if session["role"] == "viewer" %}readonly class="readonly"{% endif %}>
-        </div>
-        <div class="form-group">
-            <label for="dosage">Dosage:</label>
-            <input type="text" id="dosage" name="dosage" value="{{ product[7] }}" {% if session["role"] == "viewer" %}readonly class="readonly"{% endif %}>
-        </div>
-        <div class="form-group">
-            <label for="remark">Remark:</label>
-            <textarea id="remark" name="remark" rows="4" {% if session["role"] == "viewer" %}readonly class="readonly"{% endif %}>{{ product[8] }}</textarea>
+            <input type="text" id="item_name" name="item_name" value="{{ product[2] }}" {% if role == "viewer" %}readonly class="readonly"{% endif %}>
         </div>
 
         <div class="claims-container">
@@ -159,56 +137,25 @@
                 <div class="claim">
                     <div class="form-group">
                         <label>Main Claim:</label>
-                        <input type="text" name="claim_main[]" value="{{ claim[0] }}" {% if session["role"] == "viewer" %}readonly class="readonly"{% endif %}>
+                        <input type="text" name="claim_main[]" value="{{ claim[0] }}" {% if role == "viewer" %}readonly class="readonly"{% endif %}>
                     </div>
                     <div class="form-group">
                         <label>Claim Description:</label>
-                        <input type="text" name="claim_description[]" value="{{ claim[1] }}" {% if session["role"] == "viewer" %}readonly class="readonly"{% endif %}>
+                        <input type="text" name="claim_description[]" value="{{ claim[1] }}" {% if role == "viewer" %}readonly class="readonly"{% endif %}>
                     </div>
                     <div class="form-group">
                         <label>Claim Concentration:</label>
-                        <input type="number" name="claim_concentration[]" step="any" value="{{ claim[2] }}" {% if session["role"] == "viewer" %}readonly class="readonly"{% endif %}>
+                        <input type="number" name="claim_concentration[]" step="any" value="{{ claim[2] }}" {% if role == "viewer" %}readonly class="readonly"{% endif %}>
                     </div>
                 </div>
                 {% endfor %}
             </div>
         </div>
 
-        {% if session["role"] == "admin" %}
+        {% if role == "admin" %}
             <button type="submit">Save</button>
         {% endif %}
         <a href="{{ url_for('index') }}">Cancel</a>
     </form>
-
-    <script>
-        let claimCount = {{ claims|length }};
-
-        function addClaim() {
-            const claimsContainer = document.getElementById('claims');
-            const newClaim = document.createElement('div');
-            newClaim.classList.add('claim');
-            newClaim.innerHTML = `
-                <div class="form-group">
-                    <label for="claim_main_${claimCount}">Main Claim:</label>
-                    <input type="text" id="claim_main_${claimCount}" name="claim_main[]">
-                </div>
-                <div class="form-group">
-                    <label for="claim_description_${claimCount}">Claim Description:</label>
-                    <input type="text" id="claim_description_${claimCount}" name="claim_description[]">
-                </div>
-                <div class="form-group">
-                    <label for="claim_concentration_${claimCount}">Claim Concentration:</label>
-                    <input type="number" id="claim_concentration_${claimCount}" name="claim_concentration[]" step="any">
-                </div>
-                <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
-            `;
-            claimsContainer.appendChild(newClaim);
-            claimCount++;
-        }
-
-        function removeClaim(element) {
-            element.parentNode.remove();
-        }
-    </script>
 </body>
 </html>
