@@ -14,6 +14,7 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            background-color: #f0f8ff;
         }
 
         table {
@@ -35,7 +36,9 @@
         }
 
         th {
-            background-color: #f2f2f2;
+            background-color: #003366;
+            /* Dark blue header */
+            color: white;
             font-weight: bold;
             text-align: center;
         }
@@ -156,7 +159,7 @@
         .search-buttons button:hover,
         .search-buttons a:hover,
         .green-button:hover {
-            background-color: #2f732f;
+            background-color: #4cae4c;
         }
 
         .compare-button {
@@ -400,7 +403,8 @@
 
         /* 상단 바 스타일 */
         .top-bar {
-            background-color: #333;
+            background-color: #003366;
+            /* Dark blue top bar */
             color: white;
             padding: 10px;
             display: flex;
@@ -450,8 +454,8 @@
 
         /* 검색 영역 스타일 */
         .search-container {
-            background-color: #c9d6b8;
-            /* 베이지색 */
+            background-color: #e6e6ff;
+            /* Light purple search container */
             border-radius: 10px;
             /* 둥근 모서리 */
             padding: 15px;
@@ -466,10 +470,11 @@
             align-items: center;
             margin-bottom: 20px;
         }
+
         /* 기존 스타일 유지 */
 
         /* 체크박스 크기 조정 */
-            input[type="checkbox"] {
+        input[type="checkbox"] {
             width: 20px;
             height: 20px;
             cursor: pointer;
@@ -485,7 +490,10 @@
 
 <body>
     <div class="top-bar">
-        <div class="top-bar-title">USP</div>
+        <div class="top-bar-title">
+            <img src="https://pplx-res.cloudinary.com/image/upload/v1739981033/user_uploads/CwyhfCVnxEiFBLi/image.jpg"
+                alt="USP Logo" height="60">
+        </div>
         <div class="top-bar-info">
             <span>
                 {% if session['role'] == 'admin' %}
@@ -530,7 +538,8 @@
                     value="{{ search_filters.get('weight_tolerance', '') }}">
                 <select name="product_type">
                     <option value="">All Types</option>
-                    <option value="Tablet" {% if search_filters.get('product_type')=='Tablet' %}selected{% endif %}>Tablet
+                    <option value="Tablet" {% if search_filters.get('product_type')=='Tablet' %}selected{% endif %}>
+                        Tablet
                     </option>
                     <option value="Softgel" {% if search_filters.get('product_type')=='Softgel' %}selected{% endif %}>
                         Softgel</option>
@@ -542,11 +551,14 @@
                         Powder</option>
                     <option value="Liquid" {% if search_filters.get('product_type')=='Liquid' %}selected{% endif %}>
                         Liquid</option>
-                    <option value="PH Tablet" {% if search_filters.get('product_type')=='PH Product' %}selected{% endif %}>
+                    <option value="PH Tablet" {% if search_filters.get('product_type')=='PH Tablet' %}selected{%
+                        endif %}>
                         PH Tablet</option>
-                    <option value="PH Hard Capsule" {% if search_filters.get('product_type')=='PH Product' %}selected{% endif %}>
+                    <option value="PH Hard Capsule" {% if search_filters.get('product_type')=='PH Hard Capsule'
+                        %}selected{% endif %}>
                         PH Hard Capsule</option>
-                    <option value="PH Softgel" {% if search_filters.get('product_type')=='PH Product' %}selected{% endif %}>
+                    <option value="PH Softgel" {% if search_filters.get('product_type')=='PH Softgel' %}selected{%
+                        endif %}>
                         PH Softgel</option>
                 </select>
                 <div id="claim-search-container">
@@ -768,7 +780,6 @@
             function initClaimRow(claimRow) {
                 var mainClaimInput = $(claimRow).find('.claim-main-input');
                 var claimDescriptionInput = $(claimRow).find('.claim-description-input');
-
                 mainClaimInput.autocomplete({
                     source: function (request, response) {
                         $.getJSON("/autocomplete", {
