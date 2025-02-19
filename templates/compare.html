@@ -1,126 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Product Comparison</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-<style>
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-}
-th, td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: center;
-}
-th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-}
-.attribute {
-    font-weight: bold;
-    text-align: center; /* 변경 */
-}
-.return-btn {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    margin-bottom: 20px;
-}
-.return-btn:hover {
-    background-color: #45a049;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Comparison</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* 스타일 수정 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .attribute {
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .return-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .return-btn:hover {
+            background-color: #45a049;
+        }
+
+        .test-o {
+            color: black;
+        }
+
+        .test-x-or-input {
+            color: red;
+        }
+
+        .claim-legend {
+            font-size: 75%;
+            color: black;
+            margin-left: 30px;
+        }
+
+        .red-text {
+            color: red;
+        }
+    </style>
 </head>
+
 <body>
-<h1>Product Comparison</h1>
+    <h1>Product Comparison</h1>
 
-<a href="{{ url_for('index') }}" class="return-btn">Return to Main Page</a>
+    <a href="{{ url_for('index') }}" class="return-btn">Return to Main Page</a>
 
-<h2>Basic Information </h2>
-<table>
-<tr>
-    <th>Attribute</th>
-    {% for product in products|sort(attribute='0') %}
-    <th style="width: {{ 100 / (products|length + 1) }}%;">{{ product[1] }}</th>
-    {% endfor %}
-</tr>
-<tr>
-    <td class="attribute">Item Code</td>
-    {% for product in products|sort(attribute='0') %}
-    <td>{{ product[0] }}</td>
-    {% endfor %}
-</tr>
-<tr>
-    <td class="attribute">Unit Size</td>
-    {% for product in products|sort(attribute='0') %}
-    <td>{{ product[3] }}</td>
-    {% endfor %}
-</tr>
-<tr>
-    <td class="attribute">Color</td>
-    {% for product in products|sort(attribute='0') %}
-    <td>{{ product[4] }}</td>
-    {% endfor %}
-</tr>
-<tr>
-    <td class="attribute">Weight (mg)</td>
-    {% for product in products|sort(attribute='0') %}
-    <td>{{ product[5] }}</td>
-    {% endfor %}
-</tr>
-<tr>
-    <td class="attribute">Dosage</td>
-    {% for product in products|sort(attribute='0') %}
-    <td>{{ product[6] }}</td>
-    {% endfor %}
-</tr>
-<tr>
-    <td class="attribute">Remark</td>
-    {% for product in products|sort(attribute='0') %}
-    <td>{{ product[7] }}</td>
-    {% endfor %}
-</tr>
-</table>
+    <h2>Basic Information</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Attribute</th>
+                {% for product in products %}
+                <th style="width: {{ 100 / products|length }}%;">{{ product[1] }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="attribute">Item Code</td>
+                {% for product in products %}
+                <td>{{ product[0] }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td class="attribute">Unit Size</td>
+                {% for product in products %}
+                <td>{{ product[3] }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td class="attribute">Color</td>
+                {% for product in products %}
+                <td>{{ product[4] }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td class="attribute">Weight (mg)</td>
+                {% for product in products %}
+                <td>{{ product[5] }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td class="attribute">Dosage</td>
+                {% for product in products %}
+                <td>{{ product[6] }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td class="attribute">Remark</td>
+                {% for product in products %}
+                <td>{{ product[7] }}</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
 
-<h2>Claim Table</h2>
-<table>
-<tr>
-    <th>Main Claim</th>
-    {% for product in products|sort(attribute='0') %}
-    <th>{{ product[0] }}</th>
-    {% endfor %}
-</tr>
-{% set all_claims = [] %}
-{% for product in products %}
-    {% for claim in claims[product[0]] %}
-        {% if claim[0] not in all_claims %}
-            {% set _ = all_claims.append(claim[0]) %}
-        {% endif %}
-    {% endfor %}
-{% endfor %}
-{% for main_claim in all_claims|sort %}
-<tr>
-    <td class="attribute">{{ main_claim }}</td>
-    {% for product in products|sort(attribute='0') %}
-    <td>
-        {% for claim in claims[product[0]] %}
-            {% if claim[0] == main_claim %}
-                {{ claim[2] }} ({{ claim[1] }})
-            {% endif %}
-        {% endfor %}
-    </td>
-    {% endfor %}
-</tr>
-{% endfor %}
-</table>
+    <h2>Claim Table<span class="claim-legend">[ Black : Test O / <span class="red-text">Red : Test X or Input</span> ]</span>
+    </h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Main Claim</th>
+                {% for product in products %}
+                <th>{{ product[0] }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% set all_claims = [] %}
+            {% for product in products %}
+                {% for claim in claims.get(product[0], []) %}
+                    {% if claim[0] not in all_claims %}
+                        {% set _ = all_claims.append(claim[0]) %}
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+            {% for main_claim in all_claims|sort %}
+                <tr>
+                    <td class="attribute">{{ main_claim }}</td>
+                    {% for product in products %}
+                        <td>
+                            {% for claim in claims.get(product[0], []) %}
+                                {% if claim[0] == main_claim %}
+                                    {% if claim[4] == 'Test O' %}
+                                        <span class="test-o">{{ claim[2] }} ({{ claim[1] }})</span>
+                                    {% else %}
+                                        <span class="test-x-or-input">{{ claim[2] }} ({{ claim[1] }})</span>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
 </body>
+
 </html>

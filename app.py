@@ -106,8 +106,12 @@ def categorize_item_code(item_code):
         return "Powder"
     elif "A-LQ-" in item_code:
         return "Liquid"
-    elif "PH" in item_code:
-        return "PH product"
+    elif "PH-TB" in item_code:
+        return "PH Tablet"
+    elif "PH-HC" in item_code:
+        return "PH Hard Capsule"
+    elif "PH-SG" in item_code:
+        return "PH Softgel"
     else:
         return None
 
@@ -131,17 +135,28 @@ def autocomplete():
             cursor.execute('''
             SELECT DISTINCT claim_description
             FROM claims
-            WHERE claim_main = ?
+            WHERE claim_main = ? AND claim_description LIKE ?
             ORDER BY claim_description ASC
             LIMIT 10
-            ''', (main_claim,))
+            ''', (main_claim, '%' + query + '%'))
         else:
             cursor.execute('''
             SELECT DISTINCT claim_description
             FROM claims
+            WHERE claim_description LIKE ?
             ORDER BY claim_description ASC
             LIMIT 10
-            ''')
+            ''', ('%' + query + '%',))
+    else:  # 다른 필드에 대한 자동 완성 처리
+        table = 'products'
+        column = field
+        cursor.execute(f'''
+            SELECT DISTINCT {column}
+            FROM {table}
+            WHERE {column} LIKE ?
+            ORDER BY {column} ASC
+            LIMIT 10
+        ''', ('%' + query + '%',))
     suggestions = [row[0] for row in cursor.fetchall()]
     conn.close()
     return jsonify(suggestions)
@@ -389,8 +404,12 @@ def categorize_item_code(item_code):
         return "Powder"
     elif "A-LQ-" in item_code:
         return "Liquid"
-    elif "PH" in item_code:
-        return "PH product"
+    elif "PH-TB" in item_code:
+        return "PH Tablet"
+    elif "PH-HC" in item_code:
+        return "PH Harc Capsule"
+    elif "PH-SG" in item_code:
+        return "PH Softgel"
     else:
         return None
 
@@ -434,7 +453,8 @@ def search_products():
         "claim_concentration_tolerance": request.args.getlist("claim_concentration_tolerance[]", type=float),
         "claim_unit": request.args.getlist("claim_unit[]"),  # 클레임 단위 추가
         "product_type": request.args.get("product_type", None),
-        "weight_tolerance": request.args.get("weight_tolerance", "10")
+        "weight_tolerance": request.args.get("weight_tolerance", "10"),
+        "all_unit": request.args.get("all_unit", False, type=lambda v: v.lower() == 'true')  # All Unit 옵션 추가
     }
 
     # 검색 필터에서 None 값인 필터 제거
@@ -466,7 +486,8 @@ def search_products():
 
     # 나머지 필터들
     for field, value in filters.items():
-        if field not in ["weight", "claim_concentration", "claim_concentration_tolerance", "claim_main", "claim_description", "claim_unit", "dosage", "product_type", "weight_tolerance"]:
+        if field not in ["weight", "claim_concentration", "claim_concentration_tolerance", "claim_main",
+                         "claim_description", "claim_unit", "dosage", "product_type", "weight_tolerance", "all_unit"]:
             if value != "" and value is not None:
                 base_query += f" AND p.{field} LIKE :{field}"
                 params[field] = f"%{value}%"
@@ -481,22 +502,31 @@ def search_products():
         product_type = filters["product_type"]
         if product_type == "Tablet":
             base_query += " AND p.item_code LIKE :product_type"
-            params["product_type"] = "%TB%"
+            params["product_type"] = "%-TB-%"
         elif product_type == "Softgel":
             base_query += " AND p.item_code LIKE :product_type"
-            params["product_type"] = "%SG%"
+            params["product_type"] = "%-SG-%"
         elif product_type == "HardCapsule":
             base_query += " AND p.item_code LIKE :product_type"
-            params["product_type"] = "%HC%"
+            params["product_type"] = "%-HC-%"
         elif product_type == "Sachet":
             base_query += " AND p.item_code LIKE :product_type"
-            params["product_type"] = "%SH%"
+            params["product_type"] = "%-SH-%"
         elif product_type == "Powder":
             base_query += " AND p.item_code LIKE :product_type"
-            params["product_type"] = "%PW%"
+            params["product_type"] = "%-PW-%"
         elif product_type == "Liquid":
             base_query += f" AND p.item_code LIKE :product_type"
-            params["product_type"] = "%LQ%"
+            params["product_type"] = "%-LQ-%"
+        elif product_type == "PH Tablet":
+            base_query += f" AND p.item_code LIKE :product_type"
+            params["product_type"] = "PH-TB%"
+        elif product_type == "PH Hard Capsule":
+            base_query += f" AND p.item_code LIKE :product_type"
+            params["product_type"] = "PH-HC%"
+        elif product_type == "PH Softgel":
+            base_query += f" AND p.item_code LIKE :product_type"
+            params["product_type"] = "PH-SG%"
 
     # Claim 필터
     if "claim_main" in filters or "claim_description" in filters or "claim_concentration" in filters or "claim_unit" in filters:
@@ -506,22 +536,26 @@ def search_products():
         claim_concentrations = filters.get("claim_concentration", [])
         claim_concentration_tolerances = filters.get("claim_concentration_tolerance", [])
         claim_units = filters.get("claim_unit", [])  # 클레임 단위 추가
+        all_unit = filters.get("all_unit")  # All Unit 옵션 가져오기
 
         for i in range(max(len(claim_mains), len(claim_descriptions), len(claim_concentrations), len(claim_units))):
             condition = []
             if i < len(claim_mains) and claim_mains[i]:
-                condition.append(f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_main LIKE :claim_main_{i})")
+                condition.append(
+                    f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_main LIKE :claim_main_{i})")
                 params[f"claim_main_{i}"] = f"%{claim_mains[i]}%"
 
             if i < len(claim_descriptions) and claim_descriptions[i]:
-                condition.append(f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_description LIKE :claim_desc_{i})")
+                condition.append(
+                    f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_description LIKE :claim_desc_{i})")
                 params[f"claim_desc_{i}"] = f"%{claim_descriptions[i]}%"
 
             if i < len(claim_concentrations) and claim_concentrations[i]:
                 try:
                     concentration_value = float(claim_concentrations[i])
                     # claim_concentration_tolerances 리스트에 값이 있는지 확인
-                    if claim_concentration_tolerances and i < len(claim_concentration_tolerances) and claim_concentration_tolerances[i] is not None:
+                    if claim_concentration_tolerances and i < len(
+                            claim_concentration_tolerances) and claim_concentration_tolerances[i] is not None:
                         tolerance = float(claim_concentration_tolerances[i])
                     else:
                         tolerance = 10.0
@@ -529,25 +563,24 @@ def search_products():
                     min_concentration = concentration_value * (1 - tolerance / 100)
                     max_concentration = concentration_value * (1 + tolerance / 100)
 
-                    condition.append(f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_concentration BETWEEN :min_conc_{i} AND :max_conc_{i})")
+                    condition.append(
+                        f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_concentration BETWEEN :min_conc_{i} AND :max_conc_{i})")
                     params[f"min_conc_{i}"] = min_concentration
                     params[f"max_conc_{i}"] = max_concentration
                 except ValueError:
                     pass
-            
-            # 클레임 단위 조건 추가
-            if i < len(claim_units) and claim_units[i]:
-                condition.append(f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_unit = :claim_unit_{i})")
+
+            # 클레임 단위 조건 추가 (All Unit이 선택되지 않았을 때만)
+            if not all_unit and i < len(claim_units) and claim_units[i]:
+                condition.append(
+                    f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_unit = :claim_unit_{i})")
                 params[f"claim_unit_{i}"] = claim_units[i]
-            else:
-                # 단위가 지정되지 않은 경우 기본값 'mg'으로 검색
-                condition.append(f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_unit = 'mg')")
 
             if condition:
                 claim_conditions.append(" AND ".join(condition))
 
         if claim_conditions:
-            base_query += " AND " + " AND ".join(claim_conditions)
+            base_query += " AND (" + " AND ".join(claim_conditions) + ")"
 
     query = base_query + " ORDER BY p.item_code ASC"
 
@@ -568,8 +601,8 @@ def search_products():
         SELECT claim_main, claim_description, claim_concentration, claim_unit, test_result
         FROM claims
         JOIN products ON claims.product_id = products.id
-        WHERE products.item_code = :item_code
-        ''', {"item_code": product[0]})
+        WHERE products.item_code = ?
+        ''', (product[0],))
         claims = cursor.fetchall()
         product_claims[product[0]] = claims
 
@@ -580,6 +613,12 @@ def search_products():
     cursor.execute('SELECT DISTINCT item_name FROM products ORDER BY item_name ASC')
     item_name_options = [row[0] for row in cursor.fetchall()]
 
+     # 자동 완성을 위한 데이터베이스 쿼리 추가
+    item_code_options = [row[0] for row in cursor.execute('SELECT DISTINCT item_code FROM products ORDER BY item_code ASC').fetchall()]
+    description_options = [row[0] for row in cursor.execute('SELECT DISTINCT description FROM products ORDER BY description ASC').fetchall()]
+    unit_size_options = [row[0] for row in cursor.execute('SELECT DISTINCT unit_size FROM products ORDER BY unit_size ASC').fetchall()]
+    color_options = [row[0] for row in cursor.execute('SELECT DISTINCT color FROM products ORDER BY color ASC').fetchall()]
+
     conn.close()
 
     # 단위 옵션 추가
@@ -588,6 +627,8 @@ def search_products():
     return render_template('index.html', products=products, product_claims=product_claims,
                            product_categories=product_categories, search_filters=filters,
                            claim_main_options=claim_main_options, item_name_options=item_name_options,
+                           item_code_options=item_code_options, description_options=description_options,
+                           unit_size_options=unit_size_options, color_options=color_options,  # 자동완성 옵션 추가
                            claim_unit_options=claim_unit_options)  # 단위 옵션 전달
 
 @app.route('/clear')
@@ -596,7 +637,7 @@ def clear_search():
 
 @app.route('/compare', methods=['POST'])
 def compare_products():
-    selected_products = request.form.getlist('compare')
+    selected_products = request.form.getlist('item_code[]')
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
     products = []

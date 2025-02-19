@@ -13,7 +13,7 @@
             background-color: #f4f4f4;
         }
         .container {
-            max-width: 800px;
+            max-width: 1500px;
             margin: auto;
             background: white;
             padding: 20px;
@@ -30,7 +30,7 @@
         th, td {
             padding: 10px;
             border: 1px solid #ddd;
-            text-align: left;
+            text-align: center;
         }
         th {
             background-color: #f2f2f2;
@@ -50,14 +50,28 @@
         .basic-info th {
             text-align: center;
         }
+        .claims-table {
+            table-layout: fixed;
+            width: 100%;
+        }
         .claims-table th {
             text-align: center;
+        }
+        .claims-table td {
+            word-wrap: break-word;
+            word-break: break-all;
+            white-space: normal;
         }
         .claims-table td:nth-child(3),
         .claims-table td:nth-child(4),
         .claims-table td:nth-child(5) {
             text-align: center;
         }
+        .claims-table th:nth-child(1) { width: 30%; }
+        .claims-table th:nth-child(2) { width: 35%; }
+        .claims-table th:nth-child(3) { width: 15%; }
+        .claims-table th:nth-child(4) { width: 10%; }
+        .claims-table th:nth-child(5) { width: 10%; }
     </style>
 </head>
 <body>
@@ -105,8 +119,12 @@
                         Powder
                     {% elif product[1].startswith('A-LQ-') %}
                         Liquid
-                    {% elif 'PH' in product[1] %}
-                        PH product
+                    {% elif 'PH-TB-' in product[1] %}
+                        PH Tablet
+                    {% elif 'PH-HC-' in product[1] %}
+                        PH Hard Capsule
+                    {% elif 'PH-SG-' in product[1] %}
+                        PH Softgel
                     {% else %}
                         Unknown
                     {% endif %}

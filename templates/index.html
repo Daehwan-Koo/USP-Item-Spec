@@ -51,14 +51,14 @@
 
         .tooltip .tooltiptext {
             visibility: hidden;
-            width: 400px;
+            width: 800px;
             /* 더 넓은 공간을 제공 */
             background-color: #333;
             color: #fff;
             text-align: center;
             /* 텍스트 가운데 정렬 */
             border-radius: 6px;
-            padding: 5px;
+            padding: 10px;
             position: absolute;
             z-index: 1000;
             bottom: 125%;
@@ -111,7 +111,7 @@
             flex: 1;
             display: flex;
             flex-wrap: wrap;
-            gap: 5px;
+            gap: 10px;
             margin-bottom: 5px;
         }
 
@@ -156,7 +156,7 @@
         .search-buttons button:hover,
         .search-buttons a:hover,
         .green-button:hover {
-            background-color: #4cae4c;
+            background-color: #2f732f;
         }
 
         .compare-button {
@@ -190,22 +190,25 @@
             cursor: pointer;
         }
 
+        .remove-claim-search:hover {
+            background-color: #c71a0e;
+        }
+
+        /* 툴팁 내용 테이블 스타일 */
         .tooltip .tooltiptext table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
             color: white;
-            text-align: center;
-            /* 표 안의 내용을 가운데 정렬 */
+            table-layout: fixed;
         }
 
         .tooltip .tooltiptext table th,
         .tooltip .tooltiptext table td {
             border: 1px solid #ddd;
-            padding: 5px;
-            text-align: center;
-            /* th, td 안의 텍스트를 가운데 정렬 */
+            padding: 8px;
             color: white;
+            word-break: break-word;
         }
 
         .tooltip .tooltiptext table th {
@@ -215,6 +218,42 @@
 
         .tooltip .tooltiptext table tr {
             background-color: #333;
+        }
+
+        /* 컬럼 너비 조정 */
+        .tooltip .tooltiptext table th:nth-child(1),
+        /* Main 컬럼 */
+        .tooltip .tooltiptext table td:nth-child(1) {
+            width: 25%;
+            text-align: center;
+        }
+
+        .tooltip .tooltiptext table th:nth-child(2),
+        /* Description 컬럼 */
+        .tooltip .tooltiptext table td:nth-child(2) {
+            width: 33%;
+            text-align: center;
+        }
+
+        .tooltip .tooltiptext table th:nth-child(3),
+        /* Conc. 컬럼 */
+        .tooltip .tooltiptext table td:nth-child(3) {
+            width: 20%;
+            text-align: center;
+        }
+
+        .tooltip .tooltiptext table th:nth-child(4),
+        /* Unit 컬럼 */
+        .tooltip .tooltiptext table td:nth-child(4) {
+            width: 10%;
+            text-align: center;
+        }
+
+        .tooltip .tooltiptext table th:nth-child(5),
+        /* Test 컬럼 */
+        .tooltip .tooltiptext table td:nth-child(5) {
+            width: 12%;
+            text-align: center;
         }
 
         .product-type {
@@ -267,7 +306,7 @@
 
         .tooltip .tooltiptext {
             text-align: left;
-            max-width: 300px;
+            max-width: 700px;
             word-wrap: break-word;
         }
 
@@ -294,7 +333,7 @@
         th:nth-child(1),
         /* Product Type */
         td:nth-child(1) {
-            width: 10%;
+            width: 7%;
             text-align: center;
         }
 
@@ -314,27 +353,27 @@
         th:nth-child(4),
         /* Description */
         td:nth-child(4) {
-            width: 20%;
+            width: 26%;
         }
 
         th:nth-child(5),
         /* Unit Size */
         td:nth-child(5) {
-            width: 8%;
+            width: 7%;
             text-align: center;
         }
 
         th:nth-child(6),
         /* Color */
         td:nth-child(6) {
-            width: 8%;
+            width: 7%;
             text-align: center;
         }
 
         th:nth-child(7),
         /* Weight (mg) */
         td:nth-child(7) {
-            width: 8%;
+            width: 7%;
             text-align: center;
         }
 
@@ -427,14 +466,26 @@
             align-items: center;
             margin-bottom: 20px;
         }
+        /* 기존 스타일 유지 */
+
+        /* 체크박스 크기 조정 */
+            input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        /* 체크박스 컨테이너 조정 (선택사항) */
+        td:last-child {
+            text-align: center;
+            vertical-align: middle;
+        }
     </style>
 </head>
 
 <body>
     <div class="top-bar">
-        <div class="top-bar-title">
-
-        </div>
+        <div class="top-bar-title">USP</div>
         <div class="top-bar-info">
             <span>
                 {% if session['role'] == 'admin' %}
@@ -447,7 +498,7 @@
         </div>
     </div>
     <div class="product-header">
-        <h1>USP Product List</h1>
+        <h1>USP Product Spec List</h1>
         <a href="{{ url_for('add_product') }}"><button class="green-button">Add Product</button></a>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -459,20 +510,20 @@
     {% endfor %}
     {% endif %}
     {% endwith %}
-
     <div class="search-container">
         <h2>Product Search</h2>
         <form action="{{ url_for('search_products') }}" method="GET" class="search-form">
             <div class="search-fields">
-                <input type="text" name="item_code" placeholder="Item Code"
+                <input type="text" name="item_code" id="item_code" placeholder="Item Code"
                     value="{{ search_filters.get('item_code', '') }}">
-                <input type="text" id="item_name" name="item_name" placeholder="Item Name"
+                <input type="text" name="item_name" id="item_name" placeholder="Item Name"
                     value="{{ search_filters.get('item_name', '') }}">
-                <input type="text" name="description" placeholder="Description"
+                <input type="text" name="description" id="description" placeholder="Description"
                     value="{{ search_filters.get('description', '') }}">
-                <input type="text" name="unit_size" placeholder="Unit Size"
+                <input type="text" name="unit_size" id="unit_size" placeholder="Unit Size"
                     value="{{ search_filters.get('unit_size', '') }}">
-                <input type="text" name="color" placeholder="Color" value="{{ search_filters.get('color', '') }}">
+                <input type="text" name="color" id="color" placeholder="Color"
+                    value="{{ search_filters.get('color', '') }}">
                 <input type="number" name="weight" placeholder="Weight (mg)"
                     value="{{ search_filters.get('weight', '') }}">
                 <input type="number" name="weight_tolerance" placeholder="Weight Tolerance (%)"
@@ -491,6 +542,12 @@
                         Powder</option>
                     <option value="Liquid" {% if search_filters.get('product_type')=='Liquid' %}selected{% endif %}>
                         Liquid</option>
+                    <option value="PH Tablet" {% if search_filters.get('product_type')=='PH Product' %}selected{% endif %}>
+                        PH Tablet</option>
+                    <option value="PH Hard Capsule" {% if search_filters.get('product_type')=='PH Product' %}selected{% endif %}>
+                        PH Hard Capsule</option>
+                    <option value="PH Softgel" {% if search_filters.get('product_type')=='PH Product' %}selected{% endif %}>
+                        PH Softgel</option>
                 </select>
                 <div id="claim-search-container">
                     {% if search_filters.get('claim_main') %}
@@ -510,8 +567,8 @@
                                 == 'IU' %}selected{% endif %}>IU</option>
                             <option value="mga-TE" {% if search_filters.get('claim_unit') and
                                 search_filters['claim_unit'][i] == 'mga-TE' %}selected{% endif %}>mga-TE</option>
-                            <option value="mgRAE" {% if search_filters.get('claim_unit') and
-                                search_filters['claim_unit'][i] == 'mgRAE' %}selected{% endif %}>mgRAE</option>
+                            <option value="mgRAE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]
+                                == 'mgRAE' %}selected{% endif %}>mgRAE</option>
                             <option value="mgNE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]
                                 == 'mgNE' %}selected{% endif %}>mgNE</option>
                             <option value="mgDFE" {% if search_filters.get('claim_unit') and
@@ -519,7 +576,7 @@
                         </select>
                         <input type="number" name="claim_concentration_tolerance[]"
                             placeholder="Claim Tolerance (%)"
-                            value="{{ search_filters.get('claim_concentration_tolerance', [])[i] | default('') }}">
+                            value="{% if search_filters.get('claim_concentration_tolerance') and search_filters.claim_concentration_tolerance is iterable and i < search_filters.claim_concentration_tolerance|length %}{{ search_filters.claim_concentration_tolerance[i] }}{% endif %}">
                         <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
                     </div>
                     {% endfor %}
@@ -597,7 +654,7 @@
                                             <tr>
                                                 <th>Main</th>
                                                 <th>Description</th>
-                                                <th>Conc.</th>
+                                                <th>Claim</th>
                                                 <th>Unit</th>
                                                 <th>Test</th>
                                             </tr>
@@ -611,7 +668,7 @@
                                                 <td>{{ claim[3] }}</td>
                                                 <td>{{ claim[4] }}</td>
                                             </tr>
-                                        {% endfor %}
+                                            {% endfor %}
                                         </tbody>
                                     </table>
                                 </span>
@@ -629,10 +686,11 @@
                     <td style="text-align: center;">
                         <a href="{{ url_for('view_product', item_code=product[0]) }}" class="view-button">View</a>
                         <a href="{{ url_for('edit_product', item_code=product[0]) }}" class="edit-button">Edit</a>
-                        <a href="{{ url_for('delete_product', item_code=product[0]) }}" class="delete-button" onclick="return confirm('정말로 삭제하시겠습니까?')">Delete</a>
+                        <a href="{{ url_for('delete_product', item_code=product[0]) }}" class="delete-button"
+                            onclick="return confirm('정말로 삭제하시겠습니까?')">Delete</a>
                     </td>
                     <td>
-                        <input type="checkbox" name="compare" value="{{ product[0] }}">
+                        <input type="checkbox" name="item_code[]" value="{{ product[0] }}">
                     </td>
                 </tr>
                 {% endfor %}
@@ -641,23 +699,70 @@
     </form>
     <script>
         $(function () {
+            // 자동 완성 기능 초기화 함수
+            function initAutocomplete(inputId, field) {
+                $('#' + inputId).autocomplete({
+                    source: function (request, response) {
+                        $.getJSON("/autocomplete", {
+                            query: request.term,
+                            field: field
+                        }, function (data) {
+                            response($.map(data, function (item) {
+                                return {
+                                    label: item,
+                                    value: item
+                                };
+                            }));
+                        });
+                    },
+                    minLength: 1,
+                    maxShowItems: 10, // 최대 드롭다운 목록 개수
+                    select: function (event, ui) {
+                        $(this).val(ui.item.value);
+                        return false;
+                    }
+                }).autocomplete("instance")._renderItem = function (ul, item) {
+                    return $("<li>")
+                        .append("<div>" + item.label + "</div>")
+                        .appendTo(ul);
+                };
+            }
+
+            // 자동 완성 기능 초기화
+            initAutocomplete('item_code', 'item_code');
+            initAutocomplete('item_name', 'item_name');
+            initAutocomplete('description', 'description');
+            initAutocomplete('unit_size', 'unit_size');
+            initAutocomplete('color', 'color');
+
             function initClaimDescriptionAutocomplete(element, mainClaimValue) {
                 $(element).autocomplete({
                     source: function (request, response) {
                         $.getJSON("/autocomplete", {
                             field: 'claim_description',
-                            main_claim: mainClaimValue
+                            main_claim: mainClaimValue,
+                            query: request.term  // 검색어 추가
                         }, function (data) {
-                            response(data);
+                            response($.map(data, function (item) {
+                                return {
+                                    label: item,
+                                    value: item
+                                };
+                            }));
                         });
                     },
                     minLength: 0,
+                    maxShowItems: 10, // 최대 드롭다운 목록 개수
                     select: function (event, ui) {
                         $(this).val(ui.item.value);
                     }
                 }).focus(function () {
                     $(this).autocomplete("search", "");
-                });
+                }).autocomplete("instance")._renderItem = function (ul, item) {
+                    return $("<li>")
+                        .append("<div>" + item.label + "</div>")
+                        .appendTo(ul);
+                };
             }
 
             function initClaimRow(claimRow) {
@@ -670,34 +775,39 @@
                             query: request.term,
                             field: 'claim_main'
                         }, function (data) {
-                            response(data);
+                            response($.map(data, function (item) {
+                                return {
+                                    label: item,
+                                    value: item
+                                };
+                            }));
                         });
                     },
                     minLength: 1,
+                    maxShowItems: 10, // 최대 드롭다운 목록 개수
                     select: function (event, ui) {
                         $(this).val(ui.item.value);
                         initClaimDescriptionAutocomplete(claimDescriptionInput, ui.item.value);
                     }
-                });
-
+                }).autocomplete("instance")._renderItem = function (ul, item) {
+                    return $("<li>")
+                        .append("<div>" + item.label + "</div>")
+                        .appendTo(ul);
+                };
                 mainClaimInput.on('change', function () {
                     initClaimDescriptionAutocomplete(claimDescriptionInput, $(this).val());
                 });
-
                 initClaimDescriptionAutocomplete(claimDescriptionInput, mainClaimInput.val());
             }
 
-            // 기존 클레임 행에 자동완성 적용
+            // 기존 클레임 검색 행에 대해 자동완성 초기화
             $('.claim-search-row').each(function () {
                 initClaimRow(this);
             });
 
-            // 새로운 클레임 행 추가 함수 수정
-            window.addClaimSearch = function () {
-                const container = document.getElementById('claim-search-container');
-                const newClaimRow = document.createElement('div');
-                newClaimRow.className = 'claim-search-row';
-                newClaimRow.innerHTML = `
+            // 클레임 검색 행 HTML 템플릿
+            window.claimSearchRowTemplate = `
+                <div class="claim-search-row">
                     <input type="text" name="claim_main[]" class="claim-main-input" placeholder="Claim Main">
                     <input type="text" name="claim_description[]" class="claim-description-input" placeholder="Claim Description">
                     <input type="number" name="claim_concentration[]" placeholder="Claim Concentration">
@@ -712,35 +822,28 @@
                     </select>
                     <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)">
                     <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
-                `;
-                container.appendChild(newClaimRow);
-                initClaimRow(newClaimRow);
+                </div>
+            `;
+
+            // 새로운 클레임 검색 행 추가
+            window.addClaimSearch = function () {
+                const container = document.getElementById('claim-search-container');
+                // Add 10 claim rows at once
+                for (let i = 0; i < 10; i++) {
+                    const newClaimRow = document.createElement('div');
+                    newClaimRow.innerHTML = window.claimSearchRowTemplate;
+                    container.appendChild(newClaimRow);
+                    initClaimRow(newClaimRow); // 동적으로 추가된 행에 대해서도 자동 완성 기능 초기화
+                }
             };
 
-            // 기존 함수들 유지
             window.removeClaimSearch = function (button) {
-                button.closest('.claim-search-row').remove();
+                $(button).closest('.claim-search-row').remove();
             };
 
             window.submitCompareForm = function () {
                 document.getElementById('compare-form').submit();
             };
-
-            // Item Name 자동완성 (기존 코드 유지)
-            $("#item_name").autocomplete({
-                source: function (request, response) {
-                    $.getJSON("/autocomplete", {
-                        query: request.term,
-                        field: 'item_name'
-                    }, function (data) {
-                        response(data);
-                    });
-                },
-                minLength: 1,
-                select: function (event, ui) {
-                    $("#item_name").val(ui.item.value);
-                }
-            });
         });
     </script>
 </body>
