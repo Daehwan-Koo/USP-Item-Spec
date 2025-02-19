@@ -27,7 +27,8 @@
 
         input[type="text"],
         input[type="number"],
-        textarea {
+        textarea,
+        select { /* select 스타일 추가 */
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
@@ -63,7 +64,8 @@
             margin-bottom: 10px;
             align-items: center;
             position: relative;
-            padding-right: 80px; /* Remove 버튼을 위한 공간 확보 */
+            padding-right: 80px;
+            /* Remove 버튼을 위한 공간 확보 */
         }
 
         .claim-fields .form-group {
@@ -157,6 +159,11 @@
             overflow-x: hidden;
             z-index: 1000;
         }
+
+        /* 드롭다운 메뉴 스타일 */
+        .claim-fields .form-group select {
+            width: 150px;
+        }
     </style>
 </head>
 
@@ -208,17 +215,35 @@
                 <div class="claim">
                     <div class="claim-fields">
                         <div class="form-group">
-                            <label for="claim_main_0">Main Claim:</label>
-                            <input type="text" id="claim_main_0" name="claim_main[]" class="claim-main-input">
+                            <label>Main Claim:</label>
+                            <input type="text" name="claim_main[]" class="claim-main-input">
                         </div>
                         <div class="form-group">
-                            <label for="claim_description_0">Claim Description:</label>
-                            <input type="text" id="claim_description_0" name="claim_description[]"
-                                class="claim-description-input">
+                            <label>Claim Description:</label>
+                            <input type="text" name="claim_description[]" class="claim-description-input">
                         </div>
                         <div class="form-group">
-                            <label for="claim_concentration_0">Claim Concentration:</label>
-                            <input type="number" id="claim_concentration_0" name="claim_concentration[]" step="any">
+                            <label>Claim Concentration:</label>
+                            <input type="number" name="claim_concentration[]" step="any">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit:</label>
+                            <select name="claim_unit[]">
+                                <option value="mg" selected>mg</option>
+                                <option value="IU">IU</option>
+                                <option value="mga-TE">mga-TE</option>
+                                <option value="mgRAE">mgRAE</option>
+                                <option value="mgNE">mgNE</option>
+                                <option value="mgDFE">mgDFE</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Test Result:</label>
+                            <select name="test_result[]">
+                                <option value="Test O">Test O</option>
+                                <option value="Test X">Test X</option>
+                                <option value="Input">Input</option>
+                            </select>
                         </div>
                         <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
                     </div>
@@ -300,6 +325,25 @@
                         <div class="form-group">
                             <label>Claim Concentration:</label>
                             <input type="number" name="claim_concentration[]" step="any">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit:</label>
+                            <select name="claim_unit[]">
+                                <option value="mg" selected>mg</option>
+                                <option value="IU">IU</option>
+                                <option value="mga-TE">mga-TE</option>
+                                <option value="mgRAE">mgRAE</option>
+                                <option value="mgNE">mgNE</option>
+                                <option value="mgDFE">mgDFE</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Test Result:</label>
+                            <select name="test_result[]">
+                                <option value="Test O">Test O</option>
+                                <option value="Test X">Test X</option>
+                                <option value="Input">Input</option>
+                            </select>
                         </div>
                         <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
                     </div>

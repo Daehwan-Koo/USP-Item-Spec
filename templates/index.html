@@ -222,7 +222,8 @@
         }
 
         .edit-button,
-        .delete-button {
+        .delete-button,
+        .view-button {
             padding: 5px 10px;
             border: none;
             border-radius: 4px;
@@ -249,6 +250,14 @@
 
         .delete-button:hover {
             background-color: #d32f2f;
+        }
+
+        .view-button {
+            background-color: #2196F3;
+        }
+
+        .view-button:hover {
+            background-color: #1976D2;
         }
 
         .claim-tooltip,
@@ -493,6 +502,21 @@
                             placeholder="Claim Description" value="{{ search_filters['claim_description'][i] }}">
                         <input type="number" name="claim_concentration[]" placeholder="Claim Concentration"
                             value="{{ search_filters['claim_concentration'][i] }}">
+                        <select name="claim_unit[]">
+                            <option value="">All Units</option>
+                            <option value="mg" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]
+                                == 'mg' %}selected{% endif %}>mg</option>
+                            <option value="IU" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]
+                                == 'IU' %}selected{% endif %}>IU</option>
+                            <option value="mga-TE" {% if search_filters.get('claim_unit') and
+                                search_filters['claim_unit'][i] == 'mga-TE' %}selected{% endif %}>mga-TE</option>
+                            <option value="mgRAE" {% if search_filters.get('claim_unit') and
+                                search_filters['claim_unit'][i] == 'mgRAE' %}selected{% endif %}>mgRAE</option>
+                            <option value="mgNE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]
+                                == 'mgNE' %}selected{% endif %}>mgNE</option>
+                            <option value="mgDFE" {% if search_filters.get('claim_unit') and
+                                search_filters['claim_unit'][i] == 'mgDFE' %}selected{% endif %}>mgDFE</option>
+                        </select>
                         <input type="number" name="claim_concentration_tolerance[]"
                             placeholder="Claim Tolerance (%)"
                             value="{{ search_filters.get('claim_concentration_tolerance', [])[i] | default('') }}">
@@ -505,6 +529,15 @@
                         <input type="text" name="claim_description[]" class="claim-description-input"
                             placeholder="Claim Description">
                         <input type="number" name="claim_concentration[]" placeholder="Claim Concentration">
+                        <select name="claim_unit[]">
+                            <option value="">All Units</option>
+                            <option value="mg">mg</option>
+                            <option value="IU">IU</option>
+                            <option value="mga-TE">mga-TE</option>
+                            <option value="mgRAE">mgRAE</option>
+                            <option value="mgNE">mgNE</option>
+                            <option value="mgDFE">mgDFE</option>
+                        </select>
                         <input type="number" name="claim_concentration_tolerance[]"
                             placeholder="Claim Tolerance (%)">
                         <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
@@ -512,7 +545,7 @@
                     {% endif %}
                 </div>
                 <div class="add-claim-search-container">
-                    <button type="button" class="green-button" onclick="addClaimSearch()">Add Claim </button>
+                    <button type="button" class="green-button" onclick="addClaimSearch()">Add Claim</button>
                 </div>
             </div>
             <div class="search-buttons">
@@ -522,7 +555,6 @@
             </div>
         </form>
     </div>
-
     <form id="compare-form" action="{{ url_for('compare_products') }}" method="POST">
         <table>
             <thead>
@@ -565,7 +597,9 @@
                                             <tr>
                                                 <th>Main</th>
                                                 <th>Description</th>
-                                                <th>Conc. (mg)</th>
+                                                <th>Conc.</th>
+                                                <th>Unit</th>
+                                                <th>Test</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -574,8 +608,10 @@
                                                 <td>{{ claim[0] }}</td>
                                                 <td>{{ claim[1] }}</td>
                                                 <td>{{ claim[2] }}</td>
+                                                <td>{{ claim[3] }}</td>
+                                                <td>{{ claim[4] }}</td>
                                             </tr>
-                                            {% endfor %}
+                                        {% endfor %}
                                         </tbody>
                                     </table>
                                 </span>
@@ -590,10 +626,10 @@
                             {% endif %}
                         </div>
                     </td>
-                    <td>
+                    <td style="text-align: center;">
+                        <a href="{{ url_for('view_product', item_code=product[0]) }}" class="view-button">View</a>
                         <a href="{{ url_for('edit_product', item_code=product[0]) }}" class="edit-button">Edit</a>
-                        <a href="{{ url_for('delete_product', item_code=product[0]) }}"
-                            class="delete-button">Delete</a>
+                        <a href="{{ url_for('delete_product', item_code=product[0]) }}" class="delete-button" onclick="return confirm('정말로 삭제하시겠습니까?')">Delete</a>
                     </td>
                     <td>
                         <input type="checkbox" name="compare" value="{{ product[0] }}">
@@ -665,6 +701,15 @@
                     <input type="text" name="claim_main[]" class="claim-main-input" placeholder="Claim Main">
                     <input type="text" name="claim_description[]" class="claim-description-input" placeholder="Claim Description">
                     <input type="number" name="claim_concentration[]" placeholder="Claim Concentration">
+                    <select name="claim_unit[]">
+                        <option value="">All Units</option>
+                        <option value="mg">mg</option>
+                        <option value="IU">IU</option>
+                        <option value="mga-TE">mga-TE</option>
+                        <option value="mgRAE">mgRAE</option>
+                        <option value="mgNE">mgNE</option>
+                        <option value="mgDFE">mgDFE</option>
+                    </select>
                     <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)">
                     <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
                 `;

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Product</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .basic-info th {
+            text-align: center;
+        }
+        .claims-table th {
+            text-align: center;
+        }
+        .claims-table td:nth-child(3),
+        .claims-table td:nth-child(4),
+        .claims-table td:nth-child(5) {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Product Details</h1>
+        
+        <h2>Basic Information</h2>
+        <table class="basic-info">
+            <tr>
+                <th>Item Code</th>
+                <td>{{ product[1] }}</td>
+            </tr>
+            <tr>
+                <th>Item Name</th>
+                <td>{{ product[2] }}</td>
+            </tr>
+            <tr>
+                <th>Description</th>
+                <td>{{ product[3] }}</td>
+            </tr>
+            <tr>
+                <th>Unit Size</th>
+                <td>{{ product[4] }}</td>
+            </tr>
+            <tr>
+                <th>Color</th>
+                <td>{{ product[5] }}</td>
+            </tr>
+            <tr>
+                <th>Weight (mg)</th>
+                <td>{{ product[6] }}</td>
+            </tr>
+            <tr>
+                <th>Dosage</th>
+                <td>
+                    {% if product[1].startswith('A-TB-') %}
+                        Tablet
+                    {% elif product[1].startswith('A-SG-') %}
+                        Softgel
+                    {% elif product[1].startswith('A-HC-') %}
+                        Hard Capsule
+                    {% elif product[1].startswith('A-SH-') %}
+                        Sachet
+                    {% elif product[1].startswith('A-PW-') %}
+                        Powder
+                    {% elif product[1].startswith('A-LQ-') %}
+                        Liquid
+                    {% elif 'PH' in product[1] %}
+                        PH product
+                    {% else %}
+                        Unknown
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Remark</th>
+                <td>{{ product[8] }}</td>
+            </tr>
+        </table>
+
+        <h2>Claims</h2>
+        <table class="claims-table">
+            <thead>
+                <tr>
+                    <th>Main Claim</th>
+                    <th>Description</th>
+                    <th>Concentration</th>
+                    <th>Unit</th>
+                    <th>Test Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for claim in claims %}
+                <tr>
+                    <td>{{ claim[0] }}</td>
+                    <td>{{ claim[1] }}</td>
+                    <td>{{ claim[2] }}</td>
+                    <td>{{ claim[3] }}</td>
+                    <td>{{ claim[4] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <a href="{{ url_for('index') }}" class="btn">Back to List</a>
+    </div>
+</body>
+</html>

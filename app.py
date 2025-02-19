@@ -6,14 +6,12 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 app = Flask(__name__)
 app.secret_key = "secret_key"
 
-# ✅ 비밀번호 설정 (이 값을 원하는 값으로 변경)
-ADMIN_PASSWORD = "admin0123"  # 수정 가능
-VIEWER_PASSWORD = "usp0123"  # 수정 불가 (열람 전용)
+ADMIN_PASSWORD = "admin0123"
+VIEWER_PASSWORD = "usp0123"
 
-# 🔹 로그인하지 않으면 모든 페이지에서 로그인 페이지로 강제 이동
 @app.before_request
 def require_login():
-    allowed_routes = ["login", "autocomplete", "static"]  # 자동 완성 및 static 폴더 라우트 추가
+    allowed_routes = ["login", "autocomplete", "static"]
     if "role" not in session and request.endpoint not in allowed_routes and not request.path.startswith('/static'):
         return redirect(url_for("login"))
 
@@ -30,29 +28,35 @@ def init_db():
     """SQLite DB 초기화"""
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
+
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            item_code TEXT UNIQUE NOT NULL,
-            item_name TEXT,
-            description TEXT,
-            unit_size TEXT,
-            color TEXT,
-            weight REAL,
-            dosage TEXT,
-            remark TEXT
-        )
+    CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        item_code TEXT UNIQUE NOT NULL,
+        item_name TEXT,
+        description TEXT,
+        unit_size TEXT,
+        color TEXT,
+        weight REAL,
+        dosage TEXT,
+        remark TEXT
+    )
     ''')
+
+    # claims 테이블에 claim_unit 및 test_result 컬럼 추가
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS claims (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            product_id INTEGER,
-            claim_main TEXT,
-            claim_description TEXT,
-            claim_concentration REAL,
-            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
-        )
+    CREATE TABLE IF NOT EXISTS claims (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        product_id INTEGER,
+        claim_main TEXT,
+        claim_description TEXT,
+        claim_concentration REAL,
+        claim_unit TEXT DEFAULT 'mg',  -- 기본값으로 'mg' 설정
+        test_result TEXT,
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    )
     ''')
+
     conn.commit()
     conn.close()
 
@@ -66,19 +70,17 @@ def migrate_products():
         df["weight"] = pd.to_numeric(df["weight"], errors="coerce").fillna(0)
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
-
     # 기존 테이블에 REMARK 컬럼이 없으면 추가
     cursor.execute("PRAGMA table_info(products)")
     existing_columns = [row[1] for row in cursor.fetchall()]
     if "remark" not in existing_columns:
         cursor.execute("ALTER TABLE products ADD COLUMN remark TEXT")
-        conn.commit()
-
+    conn.commit()
     for _, row in df.iterrows():
         try:
             cursor.execute('''
-                INSERT OR REPLACE INTO products (item_code, item_name, description, unit_size, color, weight, dosage, remark)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO products (item_code, item_name, description, unit_size, color, weight, dosage, remark)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', (row.get("item code", ""), row.get("item name", ""), row.get("description", ""),
                 row.get("unit size", ""), row.get("color", ""), row.get("weight", 0), row.get("dosage", ""), row.get("remark", "")))
         except sqlite3.IntegrityError as e:
@@ -86,24 +88,26 @@ def migrate_products():
                 print(f"Skipping row due to duplicate item_code: {row.get('item code', '')}")
             else:
                 raise e
-        conn.commit()
+    conn.commit()
     conn.close()
 
 def categorize_item_code(item_code):
     """아이템 코드를 해석하여 제품 유형을 반환"""
-    parts = item_code.split('-')  # '-' 기준으로 분할
-    if "TB" in item_code:
+    parts = item_code.split('-') # '-' 기준으로 분할
+    if "A-TB-" in item_code:
         return "Tablet"
-    elif "SG" in item_code:
+    elif "A-SG-" in item_code:
         return "Softgel"
-    elif "HC" in item_code:
+    elif "A-HC-" in item_code:
         return "Hard Capsule"
-    elif "SH" in item_code:
+    elif "A-SH-" in item_code:
         return "Sachet"
-    elif "PW" in item_code:
+    elif "A-PW-" in item_code:
         return "Powder"
-    elif "LQ" in item_code:
+    elif "A-LQ-" in item_code:
         return "Liquid"
+    elif "PH" in item_code:
+        return "PH product"
     else:
         return None
 
@@ -112,38 +116,34 @@ def autocomplete():
     query = request.args.get("query", "").strip()
     field = request.args.get("field", "claim_main")
     main_claim = request.args.get("main_claim", "")
-
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
-
     if field == 'claim_main':
         cursor.execute('''
-            SELECT DISTINCT claim_main 
-            FROM claims
-            WHERE claim_main LIKE ?
-            ORDER BY claim_main ASC
-            LIMIT 10
+        SELECT DISTINCT claim_main
+        FROM claims
+        WHERE claim_main LIKE ?
+        ORDER BY claim_main ASC
+        LIMIT 10
         ''', ('%' + query + '%',))
     elif field == 'claim_description':
         if main_claim:
             cursor.execute('''
-                SELECT DISTINCT claim_description 
-                FROM claims
-                WHERE claim_main = ?
-                ORDER BY claim_description ASC
-                LIMIT 10
+            SELECT DISTINCT claim_description
+            FROM claims
+            WHERE claim_main = ?
+            ORDER BY claim_description ASC
+            LIMIT 10
             ''', (main_claim,))
         else:
             cursor.execute('''
-                SELECT DISTINCT claim_description 
-                FROM claims
-                ORDER BY claim_description ASC
-                LIMIT 10
+            SELECT DISTINCT claim_description
+            FROM claims
+            ORDER BY claim_description ASC
+            LIMIT 10
             ''')
-
     suggestions = [row[0] for row in cursor.fetchall()]
     conn.close()
-
     return jsonify(suggestions)
 
 @app.route('/add', methods=['GET', 'POST'])
@@ -159,34 +159,63 @@ def add_product():
         unit_size = request.form['unit_size']
         color = request.form['color']
         weight = request.form['weight']
-        dosage = request.form['dosage']  # dosage 값 가져오기
-        remark = request.form.get('remark', '')  # REMARK 값 가져오기
+        remark = request.form.get('remark', '')
+
+        # 제품 코드를 기반으로 dosage 설정
+        if item_code.startswith('A-TB-'):
+            dosage = 'Tablet'
+        elif item_code.startswith('A-SG-'):
+            dosage = 'Softgel'
+        elif item_code.startswith('A-HC-'):
+            dosage = 'Hard Capsule'
+        elif item_code.startswith('A-SH-'):
+            dosage = 'Sachet'
+        elif item_code.startswith('A-PW-'):
+            dosage = 'Powder'
+        elif item_code.startswith('A-LQ-'):
+            dosage = 'Liquid'
+        elif 'PH-TB-' in item_code:
+            dosage = 'PH Tablet'
+        elif 'PH-HC-' in item_code:
+            dosage = 'PH Hard Capsule'
+        elif 'PH-SG-' in item_code:
+            dosage = 'PH Softgel'
+        else:
+            dosage = 'Unknown'
 
         conn = sqlite3.connect(DB_FILE_PATH)
         cursor = conn.cursor()
+
         try:
             cursor.execute('''
-                INSERT INTO products (item_code, item_name, description, unit_size, color, weight, dosage, remark)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO products (item_code, item_name, description, unit_size, color, weight, dosage, remark)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', (item_code, item_name, description, unit_size, color, weight, dosage, remark))
             product_id = cursor.lastrowid
 
             claim_mains = request.form.getlist('claim_main[]')
             claim_descriptions = request.form.getlist('claim_description[]')
             claim_concentrations = request.form.getlist('claim_concentration[]')
+            claim_units = request.form.getlist('claim_unit[]')
+            test_results = request.form.getlist('test_result[]')
 
             for i in range(len(claim_mains)):
                 claim_main = claim_mains[i]
                 claim_description = claim_descriptions[i]
                 claim_concentration = claim_concentrations[i]
+                claim_unit = claim_units[i] if i < len(claim_units) else 'mg'
+                test_result = test_results[i] if i < len(test_results) else None
+
                 if claim_main and claim_description and claim_concentration:
                     cursor.execute('''
-                        INSERT INTO claims (product_id, claim_main, claim_description, claim_concentration)
-                        VALUES (?, ?, ?, ?)
-                    ''', (product_id, claim_main, claim_description, claim_concentration))
+                    INSERT INTO claims (product_id, claim_main, claim_description, claim_concentration, claim_unit, test_result)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ''', (product_id, claim_main, claim_description, claim_concentration, claim_unit, test_result))
+
             conn.commit()
             flash('Product added successfully!', 'success')
             return redirect(url_for('index'))
+
         except sqlite3.IntegrityError as e:
             conn.rollback()
             if "UNIQUE constraint failed: products.item_code" in str(e):
@@ -198,31 +227,31 @@ def add_product():
         finally:
             conn.close()
 
-    return render_template('add.html')
+    claim_unit_options = ['mg', 'IU', 'mga-TE', 'mgRAE', 'mgNE', 'mgDFE']
+    test_result_options = ['Test O', 'Test X', 'Input']
+    return render_template('add.html', claim_unit_options=claim_unit_options, test_result_options=test_result_options)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         password = request.form["password"]
-        
         if password == ADMIN_PASSWORD:
-            session["role"] = "admin"  # 관리자 권한 부여
+            session["role"] = "admin"
             flash("관리자로 로그인했습니다!", "success")
             return redirect(url_for("index"))
-        
         elif password == VIEWER_PASSWORD:
-            session["role"] = "viewer"  # 열람 전용 권한 부여
+            session["role"] = "viewer"
             flash("열람 전용으로 로그인했습니다!", "info")
             return redirect(url_for("index"))
-        
         else:
             flash("잘못된 비밀번호입니다. 다시 시도하세요.", "danger")
-    
+        return render_template("login.html")
+
     return render_template("login.html")
 
 @app.route("/logout")
 def logout():
-    session.pop("role", None)  # 세션에서 권한 제거
+    session.pop("role", None)
     flash("로그아웃했습니다.", "info")
     return redirect(url_for("login"))
 
@@ -236,32 +265,33 @@ def edit_product(item_code):
     cursor = conn.cursor()
 
     if request.method == 'GET':
-        # 🔹 제품 정보 가져오기
         cursor.execute('SELECT * FROM products WHERE item_code = ?', (item_code,))
         product = cursor.fetchone()
 
-        # 🔹 제품이 없으면 오류 방지 및 처리
         if not product:
             flash("해당 제품을 찾을 수 없습니다.", "danger")
             conn.close()
             return redirect(url_for("index"))
 
-        # 🔹 클레임 정보 가져오기 (LEFT JOIN 사용하여 제품이 존재하면 클레임이 없어도 오류 없이 실행)
+        # claim_unit, test_result 추가
         cursor.execute('''
-            SELECT claim_main, claim_description, claim_concentration
-            FROM claims
-            LEFT JOIN products ON claims.product_id = products.id
-            WHERE products.item_code = ?
+        SELECT claim_main, claim_description, claim_concentration, claim_unit, test_result
+        FROM claims
+        LEFT JOIN products ON claims.product_id = products.id
+        WHERE products.item_code = ?
         ''', (item_code,))
         claims = cursor.fetchall()
 
         conn.close()
-        return render_template('edit.html', product=product, claims=claims)
+
+        # 단위 옵션과 테스트 결과 옵션 추가
+        claim_unit_options = ['mg', 'IU', 'mga-TE', 'mgRAE', 'mgNE', 'mgDFE']
+        test_result_options = ['Test O', 'Test X', 'Input']
+        return render_template('edit.html', product=product, claims=claims, claim_unit_options=claim_unit_options, test_result_options=test_result_options)
 
     elif request.method == 'POST':
-        # 🔹 수정: request.form.get()을 사용하여 KeyError 방지
         item_name = request.form.get('item_name', '')
-        description = request.form.get('description', '')  # 🔥 KeyError 발생 방지
+        description = request.form.get('description', '')
         unit_size = request.form.get('unit_size', '')
         color = request.form.get('color', '')
         weight = request.form.get('weight', '')
@@ -269,38 +299,41 @@ def edit_product(item_code):
         remark = request.form.get('remark', '')
 
         try:
-            # 🔹 제품 정보 업데이트
             cursor.execute('''
-                UPDATE products SET item_name=?, description=?, unit_size=?, color=?, weight=?, dosage=?, remark=?
-                WHERE item_code=?
+            UPDATE products SET item_name=?, description=?, unit_size=?, color=?, weight=?, dosage=?, remark=?
+            WHERE item_code=?
             ''', (item_name, description, unit_size, color, weight, dosage, remark, item_code))
 
-            # 🔹 기존 클레임 삭제
+            # 기존 클레임 삭제
             cursor.execute('''
-                DELETE FROM claims
-                WHERE product_id IN (SELECT id FROM products WHERE item_code = ?)
+            DELETE FROM claims
+            WHERE product_id IN (SELECT id FROM products WHERE item_code = ?)
             ''', (item_code,))
 
-            # 🔹 새 클레임 추가
+            # 새 클레임 추가
             claim_mains = request.form.getlist('claim_main[]')
             claim_descriptions = request.form.getlist('claim_description[]')
             claim_concentrations = request.form.getlist('claim_concentration[]')
+            claim_units = request.form.getlist('claim_unit[]')  # 클레임 단위 추가
+            test_results = request.form.getlist('test_result[]')  # 테스트 결과 추가
 
             cursor.execute('SELECT id FROM products WHERE item_code = ?', (item_code,))
             product_id = cursor.fetchone()
 
             if product_id:
-                product_id = product_id[0]  # tuple 값 추출
+                product_id = product_id[0]
                 for i in range(len(claim_mains)):
                     claim_main = claim_mains[i]
                     claim_description = claim_descriptions[i]
                     claim_concentration = claim_concentrations[i]
+                    claim_unit = claim_units[i] if i < len(claim_units) else 'mg'  # 단위가 없는 경우 기본값 'mg' 사용
+                    test_result = test_results[i] if i < len(test_results) else None  # 테스트 결과가 없는 경우 None 사용
 
                     if claim_main and claim_description and claim_concentration:
                         cursor.execute('''
-                            INSERT INTO claims (product_id, claim_main, claim_description, claim_concentration)
-                            VALUES (?, ?, ?, ?)
-                        ''', (product_id, claim_main, claim_description, claim_concentration))
+                        INSERT INTO claims (product_id, claim_main, claim_description, claim_concentration, claim_unit, test_result)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        ''', (product_id, claim_main, claim_description, claim_concentration, claim_unit, test_result))
 
             conn.commit()
             flash('제품 정보가 수정되었습니다!', 'success')
@@ -322,16 +355,21 @@ def delete_product(item_code):
 
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
+
     try:
         # 제품 삭제 전에 연결된 클레임 먼저 삭제
         cursor.execute('DELETE FROM claims WHERE product_id IN (SELECT id FROM products WHERE item_code = ?)', (item_code,))
+
         # 제품 삭제
         cursor.execute('DELETE FROM products WHERE item_code = ?', (item_code,))
+
         conn.commit()
         flash('제품이 성공적으로 삭제되었습니다!', 'success')
+
     except sqlite3.Error as e:
         conn.rollback()
         flash(f'오류 발생: {str(e)}', 'danger')
+
     finally:
         conn.close()
 
@@ -339,18 +377,20 @@ def delete_product(item_code):
 
 def categorize_item_code(item_code):
     """아이템 코드를 해석하여 제품 유형을 반환"""
-    if "TB" in item_code:
+    if "A-TB-" in item_code:
         return "Tablet"
-    elif "SG" in item_code:
+    elif "A-SG-" in item_code:
         return "Softgel"
-    elif "HC" in item_code:
+    elif "A-HC-" in item_code:
         return "Hard Capsule"
-    elif "SH" in item_code:
+    elif "A-SH-" in item_code:
         return "Sachet"
-    elif "PW" in item_code:
+    elif "A-PW-" in item_code:
         return "Powder"
-    elif "LQ" in item_code:
+    elif "A-LQ-" in item_code:
         return "Liquid"
+    elif "PH" in item_code:
+        return "PH product"
     else:
         return None
 
@@ -361,22 +401,19 @@ def index():
     cursor.execute('SELECT item_code, item_name, description, unit_size, color, weight, dosage, remark FROM products ORDER BY item_code ASC')
     products = cursor.fetchall()
     products = [(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7] if p[7] is not None else '') for p in products]
-
     product_categories = {}
     for product in products:
         product_categories[product[0]] = categorize_item_code(product[0])
-
     product_claims = {}
     for product in products:
         cursor.execute('''
-            SELECT claim_main, claim_description, claim_concentration
-            FROM claims
-            JOIN products ON claims.product_id = products.id
-            WHERE products.item_code = ?
+        SELECT claim_main, claim_description, claim_concentration, claim_unit, test_result
+        FROM claims
+        JOIN products ON claims.product_id = products.id
+        WHERE products.item_code = ?
         ''', (product[0],))
         claims = cursor.fetchall()
         product_claims[product[0]] = claims
-
     conn.close()
     return render_template('index.html', products=products, product_claims=product_claims, product_categories=product_categories, search_filters=request.args)
 
@@ -395,6 +432,7 @@ def search_products():
         "claim_description": request.args.getlist("claim_description[]"),
         "claim_concentration": request.args.getlist("claim_concentration[]"),
         "claim_concentration_tolerance": request.args.getlist("claim_concentration_tolerance[]", type=float),
+        "claim_unit": request.args.getlist("claim_unit[]"),  # 클레임 단위 추가
         "product_type": request.args.get("product_type", None),
         "weight_tolerance": request.args.get("weight_tolerance", "10")
     }
@@ -406,10 +444,11 @@ def search_products():
     cursor = conn.cursor()
 
     base_query = """
-        SELECT DISTINCT p.item_code, p.item_name, p.description, p.unit_size, p.color, p.weight, p.dosage, p.remark
-        FROM products p
-        WHERE 1=1
+    SELECT DISTINCT p.item_code, p.item_name, p.description, p.unit_size, p.color, p.weight, p.dosage, p.remark
+    FROM products p
+    WHERE 1=1
     """
+
     params = {}
 
     # Weight 필터
@@ -427,7 +466,7 @@ def search_products():
 
     # 나머지 필터들
     for field, value in filters.items():
-        if field not in ["weight", "claim_concentration", "claim_concentration_tolerance", "claim_main", "claim_description", "dosage", "product_type", "weight_tolerance"]:
+        if field not in ["weight", "claim_concentration", "claim_concentration_tolerance", "claim_main", "claim_description", "claim_unit", "dosage", "product_type", "weight_tolerance"]:
             if value != "" and value is not None:
                 base_query += f" AND p.{field} LIKE :{field}"
                 params[field] = f"%{value}%"
@@ -460,20 +499,24 @@ def search_products():
             params["product_type"] = "%LQ%"
 
     # Claim 필터
-    if "claim_main" in filters or "claim_description" in filters or "claim_concentration" in filters:
+    if "claim_main" in filters or "claim_description" in filters or "claim_concentration" in filters or "claim_unit" in filters:
         claim_conditions = []
         claim_mains = filters.get("claim_main", [])
         claim_descriptions = filters.get("claim_description", [])
         claim_concentrations = filters.get("claim_concentration", [])
         claim_concentration_tolerances = filters.get("claim_concentration_tolerance", [])
-        for i in range(max(len(claim_mains), len(claim_descriptions), len(claim_concentrations))):
+        claim_units = filters.get("claim_unit", [])  # 클레임 단위 추가
+
+        for i in range(max(len(claim_mains), len(claim_descriptions), len(claim_concentrations), len(claim_units))):
             condition = []
             if i < len(claim_mains) and claim_mains[i]:
                 condition.append(f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_main LIKE :claim_main_{i})")
                 params[f"claim_main_{i}"] = f"%{claim_mains[i]}%"
+
             if i < len(claim_descriptions) and claim_descriptions[i]:
                 condition.append(f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_description LIKE :claim_desc_{i})")
                 params[f"claim_desc_{i}"] = f"%{claim_descriptions[i]}%"
+
             if i < len(claim_concentrations) and claim_concentrations[i]:
                 try:
                     concentration_value = float(claim_concentrations[i])
@@ -482,13 +525,24 @@ def search_products():
                         tolerance = float(claim_concentration_tolerances[i])
                     else:
                         tolerance = 10.0
+
                     min_concentration = concentration_value * (1 - tolerance / 100)
                     max_concentration = concentration_value * (1 + tolerance / 100)
+
                     condition.append(f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_concentration BETWEEN :min_conc_{i} AND :max_conc_{i})")
                     params[f"min_conc_{i}"] = min_concentration
                     params[f"max_conc_{i}"] = max_concentration
                 except ValueError:
                     pass
+            
+            # 클레임 단위 조건 추가
+            if i < len(claim_units) and claim_units[i]:
+                condition.append(f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_unit = :claim_unit_{i})")
+                params[f"claim_unit_{i}"] = claim_units[i]
+            else:
+                # 단위가 지정되지 않은 경우 기본값 'mg'으로 검색
+                condition.append(f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_unit = 'mg')")
+
             if condition:
                 claim_conditions.append(" AND ".join(condition))
 
@@ -499,6 +553,7 @@ def search_products():
 
     print("쿼리:", query)  # 쿼리 출력
     print("파라미터:", params)  # 파라미터 출력
+
     cursor.execute(query, params)
     products = cursor.fetchall()
 
@@ -510,10 +565,10 @@ def search_products():
     product_claims = {}
     for product in products:
         cursor.execute('''
-            SELECT claim_main, claim_description, claim_concentration
-            FROM claims
-            JOIN products ON claims.product_id = products.id
-            WHERE products.item_code = :item_code
+        SELECT claim_main, claim_description, claim_concentration, claim_unit, test_result
+        FROM claims
+        JOIN products ON claims.product_id = products.id
+        WHERE products.item_code = :item_code
         ''', {"item_code": product[0]})
         claims = cursor.fetchall()
         product_claims[product[0]] = claims
@@ -527,9 +582,13 @@ def search_products():
 
     conn.close()
 
-    return render_template('index.html', products=products, product_claims=product_claims, 
+    # 단위 옵션 추가
+    claim_unit_options = ['mg', 'IU', 'mga-TE', 'mgRAE', 'mgNE', 'mgDFE']
+
+    return render_template('index.html', products=products, product_claims=product_claims,
                            product_categories=product_categories, search_filters=filters,
-                           claim_main_options=claim_main_options, item_name_options=item_name_options)
+                           claim_main_options=claim_main_options, item_name_options=item_name_options,
+                           claim_unit_options=claim_unit_options)  # 단위 옵션 전달
 
 @app.route('/clear')
 def clear_search():
@@ -538,51 +597,67 @@ def clear_search():
 @app.route('/compare', methods=['POST'])
 def compare_products():
     selected_products = request.form.getlist('compare')
+    conn = sqlite3.connect(DB_FILE_PATH)
+    cursor = conn.cursor()
+    products = []
+    claims = {}
+    for item_code in selected_products:
+        cursor.execute('''
+        SELECT item_code, item_name, description, unit_size, color, weight, dosage, remark
+        FROM products
+        WHERE item_code = ?
+        ''', (item_code,))
+        product = cursor.fetchone()
+        if product:
+            products.append(product)
+        cursor.execute('''
+        SELECT claim_main, claim_description, claim_concentration, claim_unit, test_result
+        FROM claims
+        JOIN products ON claims.product_id = products.id
+        WHERE products.item_code = ?
+        ''', (item_code,))
+        product_claims = cursor.fetchall()
+        claims[item_code] = product_claims
+    conn.close()
+    return render_template('compare.html', products=products, claims=claims)
 
+# 새로운 뷰 페이지 라우트
+@app.route('/view/<item_code>')
+def view_product(item_code):
     conn = sqlite3.connect(DB_FILE_PATH)
     cursor = conn.cursor()
 
-    products = []
-    claims = {}
+    cursor.execute('SELECT * FROM products WHERE item_code = ?', (item_code,))
+    product = cursor.fetchone()
 
-    for item_code in selected_products:
-        cursor.execute('''
-            SELECT item_code, item_name, description, unit_size, color, weight, dosage, remark
-            FROM products
-            WHERE item_code = ?
-        ''', (item_code,))
-        product = cursor.fetchone()
+    if not product:
+        flash("해당 제품을 찾을 수 없습니다.", "danger")
+        conn.close()
+        return redirect(url_for("index"))
 
-        if product:
-            products.append(product)
-
-            cursor.execute('''
-                SELECT claim_main, claim_description, claim_concentration
-                FROM claims
-                JOIN products ON claims.product_id = products.id
-                WHERE products.item_code = ?
-            ''', (item_code,))
-            product_claims = cursor.fetchall()
-            claims[item_code] = product_claims
+    cursor.execute('''
+    SELECT claim_main, claim_description, claim_concentration, claim_unit, test_result
+    FROM claims
+    LEFT JOIN products ON claims.product_id = products.id
+    WHERE products.item_code = ?
+    ''', (item_code,))
+    claims = cursor.fetchall()
 
     conn.close()
 
-    return render_template('compare.html', products=products, claims=claims)
+    return render_template('view.html', product=product, claims=claims)
 
 if __name__ == "__main__":
     db_exists = os.path.exists(DB_FILE_PATH)
     init_db()  # 테이블 초기화 (이미 존재하면 아무 작업도 안 함)
-
     if not db_exists:
         migrate_products()  # 엑셀 데이터 마이그레이션
         print("✅ Database initialized and data migrated successfully!")
     else:
         conn = sqlite3.connect(DB_FILE_PATH)
         cursor = conn.cursor()
-
         cursor.execute("PRAGMA table_info(products)")
         columns = [col[1] for col in cursor.fetchall()]
-
         if 'dosage' not in columns:
             try:
                 cursor.execute("ALTER TABLE products ADD COLUMN dosage TEXT")
@@ -590,9 +665,8 @@ if __name__ == "__main__":
                 print("✅ Dosage column added successfully!")
             except sqlite3.Error as e:
                 print(f"❗ Error adding dosage column: {e}")
-        else:
-            print("✅ Dosage column already exists.")
-
+            else:
+                print("✅ Dosage column already exists.")
         if 'remark' not in columns:
             try:
                 cursor.execute("ALTER TABLE products ADD COLUMN remark TEXT")
@@ -600,10 +674,8 @@ if __name__ == "__main__":
                 print("✅ Remark column added successfully!")
             except sqlite3.Error as e:
                 print(f"❗ Error adding remark column: {e}")
-        else:
-            print("✅ Remark column already exists.")
-
+            else:
+                print("✅ Remark column already exists.")
         conn.close()
         print("✅ Database exists. Skipping initialization.")
-
     app.run(debug=True)

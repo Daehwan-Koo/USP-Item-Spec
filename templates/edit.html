@@ -27,7 +27,8 @@
 
         input[type="text"],
         input[type="number"],
-        textarea {
+        textarea,
+        select { /* select 스타일 추가 */
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
@@ -156,6 +157,11 @@
         .claim-fields .form-group input[type="number"] {
             width: 150px;
         }
+
+        /* 드롭다운 메뉴 스타일 */
+        .claim-fields .form-group select {
+            width: 150px;
+        }
     </style>
 </head>
 
@@ -203,7 +209,6 @@
             <label for="remark">Remark:</label>
             <textarea id="remark" name="remark" rows="4">{{ product[8] }}</textarea>
         </div>
-
         <div class="claims-container">
             <h3>Claims</h3>
             <div id="claims">
@@ -212,8 +217,8 @@
                     <div class="claim-fields">
                         <div class="form-group">
                             <label>Main Claim:</label>
-                            <input type="text" name="claim_main[]" class="claim-main-input"
-                                value="{{ claim[0] }}" {% if role=="viewer" %}readonly class="readonly" {% endif %}>
+                            <input type="text" name="claim_main[]" class="claim-main-input" value="{{ claim[0] }}"
+                                {% if role=="viewer" %}readonly class="readonly" {% endif %}>
                         </div>
                         <div class="form-group">
                             <label>Claim Description:</label>
@@ -224,6 +229,25 @@
                             <label>Claim Concentration:</label>
                             <input type="number" name="claim_concentration[]" step="any" value="{{ claim[2] }}"
                                 {% if role=="viewer" %}readonly class="readonly" {% endif %}>
+                        </div>
+                        <div class="form-group">
+                            <label>Unit:</label>
+                            <select name="claim_unit[]" {% if role=="viewer" %}disabled class="readonly" {% endif %}>
+                                <option value="mg" {% if claim[3] == 'mg' %}selected{% endif %}>mg</option>
+                                <option value="IU" {% if claim[3] == 'IU' %}selected{% endif %}>IU</option>
+                                <option value="mga-TE" {% if claim[3] == 'mga-TE' %}selected{% endif %}>mga-TE</option>
+                                <option value="mgRAE" {% if claim[3] == 'mgRAE' %}selected{% endif %}>mgRAE</option>
+                                <option value="mgNE" {% if claim[3] == 'mgNE' %}selected{% endif %}>mgNE</option>
+                                <option value="mgDFE" {% if claim[3] == 'mgDFE' %}selected{% endif %}>mgDFE</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Test Result:</label>
+                            <select name="test_result[]" {% if role=="viewer" %}disabled class="readonly" {% endif %}>
+                                <option value="Test O" {% if claim[4] == 'Test O' %}selected{% endif %}>Test O</option>
+                                <option value="Test X" {% if claim[4] == 'Test X' %}selected{% endif %}>Test X</option>
+                                <option value="Input" {% if claim[4] == 'Input' %}selected{% endif %}>Input</option>
+                            </select>
                         </div>
                         {% if role == "admin" %}
                         <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
@@ -312,6 +336,25 @@
                         <div class="form-group">
                             <label>Claim Concentration:</label>
                             <input type="number" name="claim_concentration[]" step="any">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit:</label>
+                            <select name="claim_unit[]">
+                                <option value="mg" selected>mg</option>
+                                <option value="IU">IU</option>
+                                <option value="mga-TE">mga-TE</option>
+                                <option value="mgRAE">mgRAE</option>
+                                <option value="mgNE">mgNE</option>
+                                <option value="mgDFE">mgDFE</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Test Result:</label>
+                            <select name="test_result[]">
+                                <option value="Test O">Test O</option>
+                                <option value="Test X">Test X</option>
+                                <option value="Input">Input</option>
+                            </select>
                         </div>
                         <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
                     </div>
