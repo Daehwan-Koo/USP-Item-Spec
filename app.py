@@ -83,13 +83,33 @@ def migrate_products():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', (row.get("item code", ""), row.get("item name", ""), row.get("description", ""),
                 row.get("unit size", ""), row.get("color", ""), row.get("weight", 0), row.get("dosage", ""), row.get("remark", "")))
+            conn.commit()
+            product_id = cursor.execute("SELECT id FROM products WHERE item_code = ?", (row.get("item code", ""),)).fetchone()[0]
+
+            # 엑셀에서 claim 정보를 가져와서 claims 테이블 업데이트 또는 삽입
+            claim_main = row.get("claim main", "")
+            claim_description = row.get("claim description", "")
+            claim_concentration = row.get("claim concentration", "")
+            claim_unit = row.get("claim unit", "mg")  # 기본값 설정
+            test_result = row.get("test result", "")
+
+            if claim_main and claim_description and claim_concentration:
+                try:
+                    cursor.execute('''
+                    INSERT OR REPLACE INTO claims (product_id, claim_main, claim_description, claim_concentration, claim_unit, test_result)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ''', (product_id, claim_main, claim_description, claim_concentration, claim_unit, test_result))
+                    conn.commit()
+                except sqlite3.Error as e:
+                    print(f"claim 정보 업데이트 중 오류 발생: {e}")
+
         except sqlite3.IntegrityError as e:
             if "UNIQUE constraint failed: products.item_code" in str(e):
                 print(f"Skipping row due to duplicate item_code: {row.get('item code', '')}")
             else:
                 raise e
-    conn.commit()
     conn.close()
+    print("✅ 제품 및 claim 정보가 업데이트되었습니다.")
 
 def categorize_item_code(item_code):
     """아이템 코드를 해석하여 제품 유형을 반환"""
@@ -407,7 +427,7 @@ def categorize_item_code(item_code):
     elif "PH-TB" in item_code:
         return "PH Tablet"
     elif "PH-HC" in item_code:
-        return "PH Harc Capsule"
+        return "PH Hard Capsule"
     elif "PH-SG" in item_code:
         return "PH Softgel"
     else:
@@ -706,8 +726,8 @@ if __name__ == "__main__":
                 print("✅ Dosage column added successfully!")
             except sqlite3.Error as e:
                 print(f"❗ Error adding dosage column: {e}")
-            else:
-                print("✅ Dosage column already exists.")
+        else:
+            print("✅ Dosage column already exists.")
         if 'remark' not in columns:
             try:
                 cursor.execute("ALTER TABLE products ADD COLUMN remark TEXT")
@@ -715,8 +735,9 @@ if __name__ == "__main__":
                 print("✅ Remark column added successfully!")
             except sqlite3.Error as e:
                 print(f"❗ Error adding remark column: {e}")
-            else:
-                print("✅ Remark column already exists.")
+        else:
+            print("✅ Remark column already exists.")
         conn.close()
-        print("✅ Database exists. Skipping initialization.")
+        print("✅ Database exists. Updating with latest Excel data.")
+        migrate_products()  # 엑셀 데이터로 기존 DB 업데이트
     app.run(debug=True)
