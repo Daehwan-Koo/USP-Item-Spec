@@ -10,7 +10,7 @@
             line-height: 1.6;
             margin: 0;
             padding: 20px;
-            background-color: #f4f4f4;
+            background-color: #f0f8ff; /* Light blue background, same as index */
         }
         .container {
             max-width: 1500px;
@@ -20,35 +20,43 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         h1 {
-            color: #333;
+            color: #003366; /* Dark blue header, same as index */
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
+            font-size: 14px; /* Match index font size */
         }
         th, td {
-            padding: 10px;
+            padding: 8px; /* Reduced padding to match index */
             border: 1px solid #ddd;
             text-align: center;
         }
         th {
-            background-color: #f2f2f2;
+            background-color: #003366; /* Dark blue header, same as index */
+            color: white;
             font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9; /* Match index even row color */
         }
         .btn {
             display: inline-block;
-            padding: 10px 15px;
-            background-color: #4CAF50;
+            padding: 5px 10px; /* Match index button padding */
+            background-color: #5cb85c; /* Green button, same as index */
             color: white;
             text-decoration: none;
-            border-radius: 5px;
+            border-radius: 4px; /* Match index button border-radius */
+            font-size: 14px; /* Match index button font-size */
         }
         .btn:hover {
-            background-color: #45a049;
+            background-color: #4cae4c; /* Darker green on hover, same as index */
         }
         .basic-info th {
             text-align: center;
+            color: Black;
+            background-color: #e6e6ff; /* Light purple search container */
         }
         .claims-table {
             table-layout: fixed;

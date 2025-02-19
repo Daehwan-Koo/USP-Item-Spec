@@ -11,12 +11,14 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            background-color: #f0f8ff; /* Index 페이지와 동일한 배경색 */
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
+            table-layout: fixed;
         }
 
         th,
@@ -27,17 +29,25 @@
         }
 
         th {
-            background-color: #f2f2f2;
+            background-color: #003366; /* Index 페이지와 동일한 헤더 색상 */
+            color: white;
             font-weight: bold;
         }
 
         .attribute {
             font-weight: bold;
             text-align: center;
+            width: 15%;
+            min-width: 150px;
+        }
+
+        th:not(:first-child),
+        td:not(:first-child) {
+            width: calc((100% - 15%) / (var(--product-count)));
         }
 
         .return-btn {
-            background-color: #4CAF50;
+            background-color: #5cb85c; /* Index 페이지와 동일한 버튼 색상 */
             color: white;
             padding: 10px 20px;
             border: none;
@@ -48,7 +58,7 @@
         }
 
         .return-btn:hover {
-            background-color: #45a049;
+            background-color: #4cae4c; /* Index 페이지와 동일한 버튼 hover 색상 */
         }
 
         .test-o {
@@ -68,6 +78,14 @@
         .red-text {
             color: red;
         }
+
+        h1 {
+            color: #003366; /* Index 페이지와 동일한 제목 색상 */
+        }
+
+        h2 {
+            color: #003366; /* Index 페이지와 동일한 소제목 색상 */
+        }
     </style>
 </head>
 
@@ -77,12 +95,12 @@
     <a href="{{ url_for('index') }}" class="return-btn">Return to Main Page</a>
 
     <h2>Basic Information</h2>
-    <table>
+    <table style="--product-count: {{ products|length }};">
         <thead>
             <tr>
                 <th>Attribute</th>
                 {% for product in products %}
-                <th style="width: {{ 100 / products|length }}%;">{{ product[1] }}</th>
+                <th>{{ product[1] }}</th>
                 {% endfor %}
             </tr>
         </thead>
@@ -128,7 +146,7 @@
 
     <h2>Claim Table<span class="claim-legend">[ Black : Test O / <span class="red-text">Red : Test X or Input</span> ]</span>
     </h2>
-    <table>
+    <table style="--product-count: {{ products|length }};">
         <thead>
             <tr>
                 <th>Main Claim</th>
