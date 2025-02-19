@@ -495,6 +495,26 @@
             font-size: 16px;
             /* 크기 조정 */
         }
+
+        /* 자동 완성 드롭다운 스타일 */
+        .ui-autocomplete {
+            max-height: 200px;
+            overflow-y: auto;
+            /* 스크롤 가능하도록 설정 */
+            overflow-x: hidden;
+            /* 가로 스크롤 방지 */
+            padding-right: 20px;
+            /* 스크롤바 공간 확보 */
+        }
+
+        .ui-autocomplete li {
+            padding: 5px;
+            font-size: 14px;
+        }
+
+        .ui-autocomplete li:hover {
+            background-color: #f0f0f0;
+        }
     </style>
 </head>
 
@@ -726,7 +746,7 @@
     <script>
         $(function () {
             // 자동 완성 기능 초기화 함수
-            function initAutocomplete(inputId, field) {
+            function initAutocomplete(inputId, field, minLength = 1) {
                 $('#' + inputId).autocomplete({
                     source: function (request, response) {
                         $.getJSON("/autocomplete", {
@@ -741,8 +761,8 @@
                             }));
                         });
                     },
-                    minLength: 1,
-                    maxShowItems: 10, // 최대 드롭다운 목록 개수
+                    minLength: minLength,
+                    maxShowItems: 50, // 최대 드롭다운 목록 개수
                     select: function (event, ui) {
                         $(this).val(ui.item.value);
                         return false;
@@ -752,14 +772,21 @@
                         .append("<div>" + item.label + "</div>")
                         .appendTo(ul);
                 };
+
+                // 클릭 시 드롭다운 표시
+                $('#' + inputId).on('click', function () {
+                    $(this).autocomplete("search", "");
+                });
             }
 
             // 자동 완성 기능 초기화
             initAutocomplete('item_code', 'item_code');
             initAutocomplete('item_name', 'item_name');
             initAutocomplete('description', 'description');
-            initAutocomplete('unit_size', 'unit_size');
-            initAutocomplete('color', 'color');
+
+            // Unit Size와 Color 필드에 대해 minLength를 0으로 설정하여 클릭 시 드롭다운이 나타나도록 함
+            initAutocomplete('unit_size', 'unit_size', 0);
+            initAutocomplete('color', 'color', 0);
 
             function initClaimDescriptionAutocomplete(element, mainClaimValue) {
                 $(element).autocomplete({
@@ -778,7 +805,7 @@
                         });
                     },
                     minLength: 0,
-                    maxShowItems: 10, // 최대 드롭다운 목록 개수
+                    maxShowItems: 30, // 최대 드롭다운 목록 개수
                     select: function (event, ui) {
                         $(this).val(ui.item.value);
                     }
@@ -809,7 +836,7 @@
                         });
                     },
                     minLength: 1,
-                    maxShowItems: 10, // 최대 드롭다운 목록 개수
+                    maxShowItems: 30, // 최대 드롭다운 목록 개수
                     select: function (event, ui) {
                         $(this).val(ui.item.value);
                         initClaimDescriptionAutocomplete(claimDescriptionInput, ui.item.value);
