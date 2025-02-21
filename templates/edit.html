@@ -6,13 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Product</title>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <style>
+        /* 테마 색상 */
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
             line-height: 1.6;
+            background-color: #f0f8ff;
+            /* 옅은 하늘색 */
+            color: #2f4f4f;
+            /* 어두운 회색 */
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #4682b4;
+            /* 진한 파란색 */
         }
 
         .form-group {
@@ -28,7 +42,7 @@
         input[type="text"],
         input[type="number"],
         textarea,
-        select { /* select 스타일 추가 */
+        select {
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
@@ -73,8 +87,10 @@
             margin-left: 20px;
         }
 
-        .add-claim {
-            background-color: #4CAF50;
+        .add-claim,
+        .add-vitamins-minerals {
+            background-color: #778899;
+            /* 회색빛 파란색 */
             color: white;
             padding: 8px 12px;
             border: none;
@@ -85,7 +101,8 @@
         }
 
         button {
-            background-color: #5cb85c;
+            background-color: #778899;
+            /* 회색빛 파란색 */
             color: white;
             padding: 10px 15px;
             border: none;
@@ -95,7 +112,8 @@
         }
 
         button:hover {
-            background-color: #4cae4c;
+            background-color: #4682b4;
+            /* 진한 파란색 */
         }
 
         a {
@@ -158,9 +176,108 @@
             width: 150px;
         }
 
-        /* 드롭다운 메뉴 스타일 */
         .claim-fields .form-group select {
             width: 150px;
+        }
+
+        /* Vitamins & Minerals Modal Styles */
+        .vitamins-minerals-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow: auto;
+        }
+
+        .vitamins-minerals-modal .modal-content {
+            position: relative;
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            animation-name: animatetop;
+            animation-duration: 0.4s
+        }
+
+        /* Add Animation */
+        @-webkit-keyframes animatetop {
+            from {
+                top: -300px;
+                opacity: 0
+            }
+
+            to {
+                top: 0;
+                opacity: 1
+            }
+        }
+
+        @keyframes animatetop {
+            from {
+                top: -300px;
+                opacity: 0
+            }
+
+            to {
+                top: 0;
+                opacity: 1
+            }
+        }
+
+        .vitamins-minerals-modal .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .vitamins-minerals-list {
+            column-count: 2;
+            padding: 10px;
+        }
+
+        .vitamins-minerals-list label {
+            font-weight: normal;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .vitamins-minerals-list input[type="checkbox"] {
+            margin-right: 5px;
+            transform: scale(1.6);
+            -webkit-transform: scale(1.6);
+            -moz-transform: scale(1.6);
+            -ms-transform: scale(1.6);
+            -o-transform: scale(1.6);
+            padding: 10px;
+        }
+
+        /* Cancel Button Style */
+        a.cancel-button {
+            background-color: #778899;
+            /* 회색빛 파란색 */
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            /* 밑줄 제거 */
+            margin-left: 10px;
+            /* 간격 유지 */
+        }
+
+        a.cancel-button:hover {
+            background-color: #4682b4;
+            /* 진한 파란색 */
+            text-decoration: none;
+            /* 호버 시 밑줄 제거 */
         }
     </style>
 </head>
@@ -178,42 +295,41 @@
     {% endif %}
     {% endwith %}
 
-    {% set role = session["role"]|default("viewer") %}
-
+    {% set role = session.get("role", "viewer") %}
     <form method="post">
         <div class="form-group">
             <label for="item_code">Item Code:</label>
-            <input type="text" id="item_code" name="item_code" value="{{ product[1] }}" readonly>
+            <input type="text" id="item_code" name="item_code" value="{{ product.item_code }}" readonly>
         </div>
         <div class="form-group">
             <label for="item_name">Item Name:</label>
-            <input type="text" id="item_name" name="item_name" value="{{ product[2] }}" {% if role not in ['master',
+            <input type="text" id="item_name" name="item_name" value="{{ product.item_name }}" {% if role not in ['master',
             'admin'] %} readonly class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="description">Description:</label>
-            <input type="text" id="description" name="description" value="{{ product[3] }}" {% if role not in ['master',
+            <input type="text" id="description" name="description" value="{{ product.description }}" {% if role not in ['master',
             'admin'] %} readonly class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="unit_size">Unit Size:</label>
-            <input type="text" id="unit_size" name="unit_size" value="{{ product[4] }}" {% if role not in ['master',
+            <input type="text" id="unit_size" name="unit_size" value="{{ product.unit_size }}" class="autocomplete-input" {% if role not in ['master',
             'admin'] %} readonly class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="color">Color:</label>
-            <input type="text" id="color" name="color" value="{{ product[5] }}" {% if role not in ['master',
+            <input type="text" id="color" name="color" value="{{ product.color }}" class="autocomplete-input" {% if role not in ['master',
             'admin'] %} readonly class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="weight">Weight (mg):</label>
-            <input type="number" id="weight" name="weight" step="any" value="{{ product[6] }}" {% if role not in
+            <input type="number" id="weight" name="weight" step="any" value="{{ product.weight }}" {% if role not in
             ['master', 'admin'] %} readonly class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="remark">Remark:</label>
             <textarea id="remark" name="remark" rows="4" {% if role not in ['master', 'admin'] %} readonly
-                class="readonly"{% endif %}>{{ product[8] }}</textarea>
+                class="readonly"{% endif %}>{{ product.remark }}</textarea>
         </div>
         <div class="claims-container">
             <h3>Claims</h3>
@@ -223,39 +339,45 @@
                     <div class="claim-fields">
                         <div class="form-group">
                             <label>Main Claim:</label>
-                            <input type="text" name="claim_main[]" class="claim-main-input" value="{{ claim[0] }}"
+                            <input type="text" name="claim_main[]" class="claim-main-input" value="{{ claim.main_claim }}"
                                 {% if role not in ['master', 'admin'] %}readonly class="readonly"{% endif %}>
                         </div>
                         <div class="form-group">
                             <label>Claim Description:</label>
                             <input type="text" name="claim_description[]" class="claim-description-input"
-                                value="{{ claim[1] }}" {% if role not in ['master', 'admin'] %}readonly
+                                value="{{ claim.claim_description }}" {% if role not in ['master', 'admin'] %}readonly
                                 class="readonly"{% endif %}>
                         </div>
                         <div class="form-group">
                             <label>Claim Concentration:</label>
-                            <input type="number" name="claim_concentration[]" step="any" value="{{ claim[2] }}"
+                            <input type="number" name="claim_concentration[]" step="any" value="{{ claim.claim_concentration }}"
                                 {% if role not in ['master', 'admin'] %}readonly class="readonly"{% endif %}>
                         </div>
                         <div class="form-group">
                             <label>Unit:</label>
                             <select name="claim_unit[]" {% if role not in ['master', 'admin'] %}disabled
                                 class="readonly"{% endif %}>
-                                <option value="mg" {% if claim[3] == 'mg' %}selected{% endif %}>mg</option>
-                                <option value="IU" {% if claim[3] == 'IU' %}selected{% endif %}>IU</option>
-                                <option value="mga-TE" {% if claim[3] == 'mga-TE' %}selected{% endif %}>mga-TE</option>
-                                <option value="mgRAE" {% if claim[3] == 'mgRAE' %}selected{% endif %}>mgRAE</option>
-                                <option value="mgNE" {% if claim[3] == 'mgNE' %}selected{% endif %}>mgNE</option>
-                                <option value="mgDFE" {% if claim[3] == 'mgDFE' %}selected{% endif %}>mgDFE</option>
+                                <option value="mg" {% if claim.claim_unit == 'mg' %}selected{% endif %}>mg</option>
+                                <option value="IU" {% if claim.claim_unit == 'IU' %}selected{% endif %}>IU</option>
+                                <option value="mga-TE" {% if claim.claim_unit == 'mga-TE' %}selected{% endif %}>mga-TE
+                                </option>
+                                <option value="mgRAE" {% if claim.claim_unit == 'mgRAE' %}selected{% endif %}>mgRAE
+                                </option>
+                                <option value="mgNE" {% if claim.claim_unit == 'mgNE' %}selected{% endif %}>mgNE</option>
+                                <option value="mgDFE" {% if claim.claim_unit == 'mgDFE' %}selected{% endif %}>mgDFE
+                                </option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label>Test Result:</label>
                             <select name="test_result[]" {% if role not in ['master', 'admin'] %}disabled
                                 class="readonly"{% endif %}>
-                                <option value="Test O" {% if claim[4] == 'Test O' %}selected{% endif %}>Test O</option>
-                                <option value="Test X" {% if claim[4] == 'Test X' %}selected{% endif %}>Test X</option>
-                                <option value="Input" {% if claim[4] == 'Input' %}selected{% endif %}>Input</option>
+                                <option value="Test O" {% if claim.test_result == 'Test O' %}selected{% endif %}>Test O
+                                </option>
+                                <option value="Test X" {% if claim.test_result == 'Test X' %}selected{% endif %}>Test X
+                                </option>
+                                <option value="Input" {% if claim.test_result == 'Input' %}selected{% endif %}>Input
+                                </option>
                             </select>
                         </div>
                         {% if role in [ "admin","master"] %}
@@ -266,22 +388,69 @@
                 {% endfor %}
             </div>
             {% if role in [ "admin","master"] %}
-            <button type="button" class="add-claim" onclick="addClaim()">Add Claim</button>
+            <button type="button" class="add-claim">Add Claim</button>
+            <button type="button" class="add-vitamins-minerals">Add Vitamins &
+                Minerals</button>
             {% endif %}
+        </div>
+
+        <!-- Vitamins & Minerals Modal -->
+        <div class="vitamins-minerals-modal" id="vitaminsMineralsModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Select Vitamins & Minerals</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="vitamins-minerals-list">
+                        <!-- Checkboxes will be dynamically added here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeVitaminsMineralsModal()">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="addSelectedVitaminsMinerals()">Add Selected</button>
+                </div>
+            </div>
         </div>
 
         {% if role in [ "admin","master"] %}
         <button type="submit">Save</button>
         {% endif %}
-        <a href="{{ url_for('index') }}">Cancel</a>
+        <a href="{{ url_for('index') }}" class="cancel-button">Cancel</a>
     </form>
 
     <script>
         $(function() {
+            // Autocomplete 초기화 함수
+            function initAutocomplete(element, field) {
+                $(element).autocomplete({
+                    source: function(request, response) {
+                        $.getJSON("/autocomplete", {
+                            query: request.term,
+                            field: field
+                        }, function(data) {
+                            response(data);
+                        });
+                    },
+                    minLength: 0,
+                    select: function(event, ui) {
+                        $(this).val(ui.item.value);
+                    }
+                }).focus(function() {
+                    $(this).autocomplete("search", "");
+                }).click(function() {
+                    $(this).autocomplete("search", "");
+                });
+            }
+
+            // Unit Size 및 Color autocomplete 초기화
+            initAutocomplete("#unit_size", "unit_size");
+            initAutocomplete("#color", "color");
+
             function initClaimDescriptionAutocomplete(element, mainClaimValue) {
                 $(element).autocomplete({
                     source: function(request, response) {
                         $.getJSON("/autocomplete", {
+                            query: request.term,
                             field: 'claim_description',
                             main_claim: mainClaimValue
                         }, function(data) {
@@ -292,7 +461,9 @@
                     select: function(event, ui) {
                         $(this).val(ui.item.value);
                     }
-                }).focus(function() {
+                }).on('focus', function() {
+                    $(this).autocomplete("search", "");
+                }).click(function() {
                     $(this).autocomplete("search", "");
                 });
             }
@@ -328,53 +499,117 @@
                 initClaimRow(this);
             });
 
-            window.addClaim = function() {
+            // Add Claim 버튼 클릭 이벤트 (이벤트 위임 사용)
+            $(document).on("click", ".add-claim", function() {
+                addClaim(5);
+            });
+
+            // Add Vitamins & Minerals 버튼 클릭 이벤트 (이벤트 위임 사용)
+            $(document).on("click", ".add-vitamins-minerals", function() {
+                openVitaminsMineralsModal();
+            });
+
+            window.addClaim = function(count = 1) {
                 var claimsContainer = document.getElementById('claims');
-                var newClaim = document.createElement('div');
-                newClaim.className = 'claim';
-                newClaim.innerHTML = `
-                    <div class="claim-fields">
-                        <div class="form-group">
-                            <label>Main Claim:</label>
-                            <input type="text" name="claim_main[]" class="claim-main-input">
+                for (let i = 0; i < count; i++) {
+                    var newClaim = document.createElement('div');
+                    newClaim.className = 'claim';
+                    newClaim.innerHTML = `
+                        <div class="claim-fields">
+                            <div class="form-group">
+                                <label>Main Claim:</label>
+                                <input type="text" name="claim_main[]" class="claim-main-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Claim Description:</label>
+                                <input type="text" name="claim_description[]" class="claim-description-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Claim Concentration:</label>
+                                <input type="number" name="claim_concentration[]" step="any">
+                            </div>
+                            <div class="form-group">
+                                <label>Unit:</label>
+                                <select name="claim_unit[]">
+                                    <option value="mg" selected>mg</option>
+                                    <option value="IU">IU</option>
+                                    <option value="mga-TE">mga-TE</option>
+                                    <option value="mgRAE">mgRAE</option>
+                                    <option value="mgNE">mgNE</option>
+                                    <option value="mgDFE">mgDFE</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Test Result:</label>
+                                <select name="test_result[]">
+                                    <option value="Test O">Test O</option>
+                                    <option value="Test X">Test X</option>
+                                    <option value="Input">Input</option>
+                                </select>
+                            </div>
+                            <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
                         </div>
-                        <div class="form-group">
-                            <label>Claim Description:</label>
-                            <input type="text" name="claim_description[]" class="claim-description-input">
-                        </div>
-                        <div class="form-group">
-                            <label>Claim Concentration:</label>
-                            <input type="number" name="claim_concentration[]" step="any">
-                        </div>
-                        <div class="form-group">
-                            <label>Unit:</label>
-                            <select name="claim_unit[]">
-                                <option value="mg" selected>mg</option>
-                                <option value="IU">IU</option>
-                                <option value="mga-TE">mga-TE</option>
-                                <option value="mgRAE">mgRAE</option>
-                                <option value="mgNE">mgNE</option>
-                                <option value="mgDFE">mgDFE</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Test Result:</label>
-                            <select name="test_result[]">
-                                <option value="Test O">Test O</option>
-                                <option value="Test X">Test X</option>
-                                <option value="Input">Input</option>
-                            </select>
-                        </div>
-                        <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
-                    </div>
-                `;
-                claimsContainer.appendChild(newClaim);
-                initClaimRow(newClaim);
+                    `;
+                    claimsContainer.appendChild(newClaim);
+                    initClaimRow(newClaim);
+                }
             };
 
             window.removeClaim = function(element) {
                 $(element).closest('.claim').remove();
             };
+
+            // Vitamins & Minerals Modal Functions
+            window.openVitaminsMineralsModal = function() {
+                var modal = document.getElementById('vitaminsMineralsModal');
+                var list = modal.querySelector('.vitamins-minerals-list');
+                list.innerHTML = ''; // Clear previous list
+
+                var vitaminsAndMinerals = [
+                    'Vit A', 'Beta-Carotene', 'Vit D3', 'Vit E', 'Vit K1', 'Vit K2', 'Vit B1', 'Vit B2', 'Vit B3',
+                    'Vit B5', 'Vit B6', 'Vit B12', 'Vit C', 'Vit B9', 'Biotin', 'Calcium', 'Magnesium', 'Iron',
+                    'Zinc', 'Copper', 'Selenium', 'Iodine', 'Manganese', 'Molybdenum', 'Potassium', 'Chromium'
+                ];
+
+                vitaminsAndMinerals.forEach(function(item) {
+                    var label = document.createElement('label');
+                    label.innerHTML = `<input type="checkbox" name="vitamins_minerals" value="${item}"> ${item}`;
+                    list.appendChild(label);
+                });
+
+                modal.style.display = "block";
+            };
+
+            window.closeVitaminsMineralsModal = function() {
+                var modal = document.getElementById('vitaminsMineralsModal');
+                modal.style.display = "none";
+            };
+
+            // Add Selected Vitamins and Minerals
+            window.addSelectedVitaminsMinerals = function() {
+                var selectedVitaminsMinerals = [];
+                var checkboxes = document.querySelectorAll('#vitaminsMineralsModal input[name="vitamins_minerals"]:checked');
+
+                checkboxes.forEach(function(checkbox) {
+                    selectedVitaminsMinerals.push(checkbox.value);
+                });
+
+                selectedVitaminsMinerals.forEach(function(item) {
+                    addClaim(); // Add a new claim for each selected item
+                    var newClaim = $('#claims .claim:last'); // Get the last claim added
+                    newClaim.find('.claim-main-input').val(item); // Set the main claim value
+                });
+
+                closeVitaminsMineralsModal(); // Close the modal
+            };
+
+            // Close the modal if the user clicks outside of it
+            window.onclick = function(event) {
+                var modal = document.getElementById('vitaminsMineralsModal');
+                if (event.target == modal) {
+                    closeVitaminsMineralsModal();
+                }
+            }
         });
     </script>
 </body>

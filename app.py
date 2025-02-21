@@ -251,16 +251,17 @@ def autocomplete():
                 ORDER BY claim_description ASC
                 LIMIT 10
                 ''', ('%' + query + '%',))
-        else:  # 다른 필드에 대한 자동 완성 처리
-            table = 'products'
-            column = field
+        elif field in ['unit_size', 'color']:
             cursor.execute(f'''
-                SELECT DISTINCT {column}
-                FROM {table}
-                WHERE {column} LIKE ?
-                ORDER BY {column} ASC
+                SELECT DISTINCT {field}
+                FROM products
+                WHERE {field} LIKE ?
+                ORDER BY {field} ASC
                 LIMIT 50
             ''', ('%' + query + '%',))
+        else:
+            return jsonify([])
+
         suggestions = [row[0] for row in cursor.fetchall()]
         return jsonify(suggestions)
     except Exception as e:
