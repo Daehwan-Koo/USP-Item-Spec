@@ -797,35 +797,51 @@ def find_db():
             flash('No selected file', 'error')
             return redirect(request.url)
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)
+            # 환경에 따른 경로 설정
+            if 'RENDER' in os.environ:
+                upload_folder = '/opt/render/project/src/data'
+            else:
+                upload_folder = r'C:\Users\dhkoo\product_app'
             
-            # Backup the current database
-            backup_path = os.path.join(app.config['UPLOAD_FOLDER'], 'claims_backup.db')
-            shutil.copy2(DB_FILE_PATH, backup_path)
+            os.makedirs(upload_folder, exist_ok=True)
+            
+            # 항상 'claims.db'로 저장
+            file_path = os.path.join(upload_folder, 'claims.db')
+            backup_path = os.path.join(upload_folder, 'claims_backup.db')
             
             try:
-                # Replace the current database with the uploaded one
-                shutil.copy2(file_path, DB_FILE_PATH)
+                # 현재 DB 백업
+                if os.path.exists(file_path):
+                    shutil.copy2(file_path, backup_path)
+                
+                # 새 DB 파일 저장
+                file.save(file_path)
+                
                 flash('Database uploaded and replaced successfully', 'success')
                 
-                # Reinitialize the database connection
+                # 데이터베이스 연결 재초기화
                 if hasattr(g, '_database'):
                     g._database.close()
                     g._database = None
                 
+                # DB_FILE_PATH 전역 변수 업데이트
+                global DB_FILE_PATH
+                DB_FILE_PATH = file_path
+                
             except Exception as e:
-                # If an error occurs, restore the backup
-                shutil.copy2(backup_path, DB_FILE_PATH)
+                # 오류 발생 시 백업 복원
+                if os.path.exists(backup_path):
+                    shutil.copy2(backup_path, file_path)
                 flash(f'Error occurred: {str(e)}. Original database restored.', 'error')
             
-            # Clean up
-            os.remove(file_path)
-            os.remove(backup_path)
+            finally:
+                # 백업 파일 정리
+                if os.path.exists(backup_path):
+                    os.remove(backup_path)
             
             return redirect(url_for('index'))
     
     return render_template('find db.html')
+
 if __name__ == '__main__':
     app.run(debug=True)
