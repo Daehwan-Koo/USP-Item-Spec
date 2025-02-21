@@ -2,12 +2,16 @@ import pandas as pd
 import sqlite3
 import os
 import shutil  # 파일 복사를 위한 라이브러리 추가
+<<<<<<< HEAD
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, g
 import logging
 import tempfile
 
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG)
+=======
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+>>>>>>> e50cb1f276cffa40aea4d49d5a65a1fa12a86a5c
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
@@ -15,6 +19,7 @@ app.secret_key = "secret_key"
 ADMIN_PASSWORD = "admin0123"
 VIEWER_PASSWORD = "usp0123"
 
+<<<<<<< HEAD
 # 렌더 환경 확인 및 DB 경로 설정
 if 'RENDER' in os.environ:
     # 렌더 환경에서는 임시 디렉토리에 저장
@@ -48,6 +53,23 @@ def initialize():
     copy_db_files()
     init_db()
     migrate_products()
+=======
+# 렌더 디스크 경로 설정
+RENDER_DISK_PATH = '/var/lib'
+EXCEL_FILE_PATH = os.path.join(RENDER_DISK_PATH, 'DB_Excel.xlsx')
+DB_FILE_PATH = os.path.join(RENDER_DISK_PATH, 'claims.db')
+
+# 기존 DB 파일을 렌더 디스크로 복사하는 함수
+def copy_db_files():
+    """DB 파일이 렌더 디스크에 없으면 복사"""
+    if not os.path.exists(EXCEL_FILE_PATH):
+        shutil.copy('DB_Excel.xlsx', EXCEL_FILE_PATH)
+    if not os.path.exists(DB_FILE_PATH):
+        shutil.copy('claims.db', DB_FILE_PATH)
+
+# 앱 시작 시 DB 파일 복사
+# copy_db_files() # 이제 이 함수는 필요할 때만 호출됩니다.
+>>>>>>> e50cb1f276cffa40aea4d49d5a65a1fa12a86a5c
 
 @app.before_request
 def require_login():
@@ -55,6 +77,7 @@ def require_login():
     if "role" not in session and request.endpoint not in allowed_routes and not request.path.startswith('/static'):
         return redirect(url_for("login"))
 
+<<<<<<< HEAD
 def get_db():
     """매 요청마다 DB 연결을 생성"""
     db = getattr(g, '_database', None)
@@ -78,6 +101,8 @@ def query_db(query, args=(), one=False):
     cursor.close()
     return (rv[0] if rv else None) if one else rv
 
+=======
+>>>>>>> e50cb1f276cffa40aea4d49d5a65a1fa12a86a5c
 def reset_db():
     """기존 DB 파일을 삭제하고 새로 생성"""
     db = get_db()
@@ -301,6 +326,12 @@ def add_product():
             db.commit()
             flash('Product added successfully!', 'success')
 
+<<<<<<< HEAD
+=======
+            # 데이터 추가 후 렌더 디스크에 저장
+            copy_db_files()
+
+>>>>>>> e50cb1f276cffa40aea4d49d5a65a1fa12a86a5c
             return redirect(url_for('index'))
 
         except sqlite3.IntegrityError as e:
@@ -418,6 +449,12 @@ def edit_product(item_code):
             db.commit()
             flash('제품 정보가 수정되었습니다!', 'success')
 
+<<<<<<< HEAD
+=======
+            # 데이터 수정 후 렌더 디스크에 저장
+            copy_db_files()
+
+>>>>>>> e50cb1f276cffa40aea4d49d5a65a1fa12a86a5c
             return redirect(url_for('index'))
 
         except sqlite3.Error as e:
@@ -443,6 +480,9 @@ def delete_product(item_code):
 
         db.commit()
         flash('제품이 성공적으로 삭제되었습니다!', 'success')
+
+        # 데이터 삭제 후 렌더 디스크에 저장
+        copy_db_files()
 
     except sqlite3.Error as e:
         db.rollback()
@@ -734,5 +774,12 @@ def internal_server_error(e):
     return "Internal Server Error", 500
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     # 로컬에서 실행할 때만 디버그 모드를 활성화
     app.run(debug=True)
+=======
+    db_exists = os.path.exists(DB_FILE_PATH)
+    init_db()  # 테이블 초기화 (이미 존재하면 아무 작업도 안 함)
+    if not db_exists:
+        migrate_products()  # 엑셀 데이터 마이그레이션
+>>>>>>> e50cb1f276cffa40aea4d49d5a65a1fa12a86a5c
