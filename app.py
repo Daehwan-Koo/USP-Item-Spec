@@ -42,13 +42,26 @@ def copy_db_files():
         shutil.copy('claims.db', DB_FILE_PATH)
         print(f"DB file copied to {DB_FILE_PATH}")
 
+# 전역 변수 선언
+first_request = True
+
 @app.before_request
 def before_first_request():
     global first_request
     if first_request:
         # 초기화 코드 실행
+        initialize_database()
+        load_configurations()
+        # 기타 초기화 작업
         first_request = False
 
+def initialize_database():
+    # 데이터베이스 초기화 코드
+    pass
+
+def load_configurations():
+    # 설정 로드 코드
+    pass
 @app.before_request
 def require_login():
     allowed_routes = ["login", "autocomplete", "static"]
