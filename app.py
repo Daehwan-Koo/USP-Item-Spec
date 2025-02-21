@@ -410,6 +410,10 @@ def edit_product(item_code):
         claim_unit_options = ['mg', 'IU', 'mga-TE', 'mgRAE', 'mgNE', 'mgDFE']
         test_result_options = ['Test O', 'Test X', 'Input']
 
+         # 🔹 추가: 기존 필터 URL을 세션에 저장 (이전 검색 화면 유지)
+        if 'filter_url' not in session or request.referrer and 'edit' not in request.referrer:
+            session['filter_url'] = request.referrer  # 필터 적용된 목록 페이지 저장
+
         return render_template('edit.html', product=product, claims=claims, claim_unit_options=claim_unit_options, test_result_options=test_result_options)
 
     elif request.method == 'POST':
@@ -456,6 +460,9 @@ def edit_product(item_code):
 
             db.commit()
             flash('제품 정보가 수정되었습니다!', 'success')
+
+            # 🔹 추가: 필터 유지된 목록으로 돌아가기
+            return redirect(session.get('filter_url', url_for('index')))
 
             return redirect(url_for('index'))
 
@@ -783,6 +790,11 @@ def compare_products():
     cursor = db.cursor()
     products = []
     claims = {}
+
+    # 🔹 기존 필터 URL을 세션에 저장 (이전 검색 화면 유지)
+    if 'filter_url' not in session or request.referrer and 'compare' not in request.referrer:
+        session['filter_url'] = request.referrer  # 검색 필터 적용된 목록 저장
+
     for item_code in selected_products:
         cursor.execute('''
         SELECT item_code, item_name, description, unit_size, color, weight, dosage, remark
@@ -792,6 +804,7 @@ def compare_products():
         product = cursor.fetchone()
         if product:
             products.append(product)
+
         cursor.execute('''
         SELECT claim_main, claim_description, claim_concentration, claim_unit, test_result
         FROM claims
@@ -800,7 +813,10 @@ def compare_products():
         ''', (item_code,))
         product_claims = cursor.fetchall()
         claims[item_code] = product_claims
-    return render_template('compare.html', products=products, claims=claims)
+
+    # 🔹 Compare 페이지 렌더링 (즉시 리디렉션 X)
+    return render_template('compare.html', products=products, claims=claims, filter_url=session.get('filter_url', url_for('index')))
+
 
 @app.route('/view/<item_code>')
 def view_product(item_code):
