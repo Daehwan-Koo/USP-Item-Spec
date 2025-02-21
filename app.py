@@ -100,7 +100,6 @@ def reset_db():
     init_db()
 
 def init_db():
-    """SQLite DB 초기화"""
     db = get_db()
     cursor = db.cursor()
     cursor.execute('''
