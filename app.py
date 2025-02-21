@@ -710,25 +710,66 @@ def search_products():
 def clear_search():
     return redirect(url_for('index'))
 
+@app.route('/check_db_exists', methods=['GET'])
+def check_db_exists():
+    """기존 DB 파일이 있는지 확인"""
+    if 'RENDER' in os.environ:
+        db_path = '/opt/render/project/src/data/claims.db'
+    else:
+        db_path = r'C:\Users\dhkoo\product_app\claims.db'
+
+    return jsonify({"exists": os.path.exists(db_path)})
+
+import os
+import shutil
+from flask import Flask, request, redirect, url_for, flash, session
+
 @app.route('/upload_db', methods=['POST'])
 def upload_db():
-    """업로드 버튼을 클릭하면 claims.db를 렌더 디스크 경로에 저장"""
+    """업로드 버튼을 클릭하면 claims.db를 렌더 또는 로컬 디스크 경로에 저장 (파일 사용 중 오류 해결)"""
     if "role" not in session or session["role"] not in ["admin", "master"]:
         flash("권한이 없습니다.", "danger")
         return redirect(url_for("index"))
 
     try:
-        copy_db_files()
-        flash("Database uploaded successfully to Render Disk!", "success")
+        # 환경에 따라 DB 저장 경로 설정
+        if 'RENDER' in os.environ:
+            db_path = '/opt/render/project/src/data/claims.db'
+        else:
+            db_path = r'C:\Users\dhkoo\product_app\claims.db'
+
+        # 현재 작업 디렉토리에서 'claims.db'의 절대 경로 가져오기
+        src_path = os.path.abspath('claims.db')
+
+        # 🔹 현재 DB 연결 닫기 (사용 중 오류 방지)
+        try:
+            conn = sqlite3.connect(db_path)
+            conn.close()
+        except Exception as e:
+            flash(f"Warning: Unable to close existing DB connection: {str(e)}", "warning")
+
+        # 🔹 파일 사용 중인 경우, 임시 파일로 이동 후 덮어쓰기
+        temp_path = db_path + ".tmp"
+        if os.path.exists(db_path):
+            os.rename(db_path, temp_path)  # 기존 DB를 임시 파일로 변경 (사용 중 문제 해결)
+
+        # 🔹 새로운 DB 파일 복사 (덮어쓰기)
+        shutil.copy2(src_path, db_path)
+
+        # 🔹 기존 임시 파일 삭제
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
+        flash(f"Database uploaded and replaced at: {db_path}", "success")
+
     except Exception as e:
         flash(f"Error uploading database: {str(e)}", "danger")
 
     return redirect(url_for("index"))
-
 @app.route('/download_db')
 def download_db():
     if "role" not in session or session["role"] not in ["master"]:
-        flash("권한이 없습니다.", "danger")
+        flash("마스터 권한이 없습니다.", "danger")
         return redirect(url_for("index"))
 
     """claims.db 파일을 다운로드"""
