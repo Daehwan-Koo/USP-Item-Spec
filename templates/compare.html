@@ -11,7 +11,7 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
-            background-color: #f0f8ff; /* Index 페이지와 동일한 배경색 */
+            background-color: #f0f8ff;
         }
 
         table {
@@ -29,7 +29,7 @@
         }
 
         th {
-            background-color: #003366; /* Index 페이지와 동일한 헤더 색상 */
+            background-color: #003366;
             color: white;
             font-weight: bold;
         }
@@ -47,7 +47,7 @@
         }
 
         .return-btn {
-            background-color: #5cb85c; /* Index 페이지와 동일한 버튼 색상 */
+            background-color: #003366;
             color: white;
             padding: 10px 20px;
             border: none;
@@ -58,7 +58,7 @@
         }
 
         .return-btn:hover {
-            background-color: #4cae4c; /* Index 페이지와 동일한 버튼 hover 색상 */
+            background-color: #001b36;
         }
 
         .test-o {
@@ -80,11 +80,16 @@
         }
 
         h1 {
-            color: #003366; /* Index 페이지와 동일한 제목 색상 */
+            color: #003366;
         }
 
         h2 {
-            color: #003366; /* Index 페이지와 동일한 소제목 색상 */
+            color: #003366;
+        }
+
+        td span {
+            display: inline-block;
+            margin-bottom: 5px;
         }
     </style>
 </head>
@@ -172,9 +177,9 @@
                             {% for claim in claims.get(product[0], []) %}
                                 {% if claim[0] == main_claim %}
                                     {% if claim[4] == 'Test O' %}
-                                        <span class="test-o">{{ claim[2] }} ({{ claim[1] }})</span>
+                                        <span class="test-o">{{ claim[2] }}<br>({{ claim[1] }})</span>
                                     {% else %}
-                                        <span class="test-x-or-input">{{ claim[2] }} ({{ claim[1] }})</span>
+                                        <span class="test-x-or-input">{{ claim[2] }}<br>({{ claim[1] }})</span>
                                     {% endif %}
                                 {% endif %}
                             {% endfor %}

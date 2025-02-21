@@ -203,7 +203,7 @@
             max-width: 600px;
             box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
             animation-name: animatetop;
-            animation-duration: 0.4s
+            animation-duration: 0.2s
         }
 
         /* Add Animation */
@@ -232,7 +232,7 @@
         }
 
         .vitamins-minerals-modal .modal-body {
-            max-height: 400px;
+            max-height: auto;
             overflow-y: auto;
         }
 
@@ -339,8 +339,9 @@
                     <div class="claim-fields">
                         <div class="form-group">
                             <label>Main Claim:</label>
-                            <input type="text" name="claim_main[]" class="claim-main-input" value="{{ claim.main_claim }}"
-                                {% if role not in ['master', 'admin'] %}readonly class="readonly"{% endif %}>
+                            <input type="text" name="claim_main[]" class="claim-main-input"
+                                value="{{ claim.claim_main }}" {% if role not in ['master', 'admin'] %}readonly
+                                class="readonly"{% endif %}>
                         </div>
                         <div class="form-group">
                             <label>Claim Description:</label>
