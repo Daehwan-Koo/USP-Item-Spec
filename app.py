@@ -17,16 +17,16 @@ VIEWER_PASSWORD = "usp0123"
 
 # 렌더 환경 확인 및 DB 경로 설정
 if 'RENDER' in os.environ:
-    # 렌더 환경에서는 /var/lib 경로에 저장
-    RENDER_DISK_PATH = '/var/lib'
+    # 렌더 환경에서는 /opt/render/project/src/data 경로에 저장
+    RENDER_DISK_PATH = '/opt/render/project/src/data'
     DB_FILE_PATH = os.path.join(RENDER_DISK_PATH, 'claims.db')
-    EXCEL_FILE_PATH = os.path.join(RENDER_DISK_PATH, 'DB_Excel.xlsx')
+    # EXCEL_FILE_PATH = os.path.join(RENDER_DISK_PATH, 'DB_Excel.xlsx')  # 더 이상 사용하지 않음
     print(f"Running on Render, DB path: {DB_FILE_PATH}")
 else:
     # 로컬 환경에서는 C:\Users\dhkoo\product_app 경로 사용
     RENDER_DISK_PATH = r'C:\Users\dhkoo\product_app'
     DB_FILE_PATH = os.path.join(RENDER_DISK_PATH, 'claims.db')
-    EXCEL_FILE_PATH = os.path.join(RENDER_DISK_PATH, 'DB_Excel.xlsx')
+    # EXCEL_FILE_PATH = os.path.join(RENDER_DISK_PATH, 'DB_Excel.xlsx')  # 더 이상 사용하지 않음
     print(f"Running locally, DB path: {DB_FILE_PATH}")
 
 # DB_FILE_PATH 경로에 폴더가 없다면 생성
@@ -35,9 +35,9 @@ os.makedirs(os.path.dirname(DB_FILE_PATH), exist_ok=True)
 # DB 파일이 없으면 복사
 def copy_db_files():
     """DB 파일이 지정 경로에 없으면 복사"""
-    if not os.path.exists(EXCEL_FILE_PATH):
-        shutil.copy('DB_Excel.xlsx', EXCEL_FILE_PATH)
-        print(f"Excel file copied to {EXCEL_FILE_PATH}")
+    # if not os.path.exists(EXCEL_FILE_PATH): # 엑셀 파일 관련 코드 제거
+    #     shutil.copy('DB_Excel.xlsx', EXCEL_FILE_PATH)
+    #     print(f"Excel file copied to {EXCEL_FILE_PATH}")
     if not os.path.exists(DB_FILE_PATH):
         shutil.copy('claims.db', DB_FILE_PATH)
         print(f"DB file copied to {DB_FILE_PATH}")
@@ -58,7 +58,7 @@ def initialize_database():
     # 데이터베이스 초기화 코드
     init_db()
     copy_db_files()  # DB 파일 복사
-    migrate_products()  # 마이그레이션
+    # migrate_products()  # 마이그레이션  # 엑셀 마이그레이션 제거
 
 def load_configurations():
     # 설정 로드 코드
@@ -132,43 +132,43 @@ def init_db():
     db.commit()
     cursor.close()
 
-def migrate_products():
-    """엑셀 데이터 불러와 SQLite에 저장"""
-    try:
-        df = pd.read_excel(EXCEL_FILE_PATH, dtype=str).fillna("")
-        df.columns = df.columns.str.strip().str.lower()
-        if "dosage" not in df.columns:
-            raise KeyError("Column 'Dosage' not found in Excel file.")
-        if "weight" in df.columns:
-            df["weight"] = pd.to_numeric(df["weight"], errors="coerce").fillna(0)
-        db = get_db()
-        cursor = db.cursor()
+# def migrate_products(): # 엑셀 마이그레이션 함수 제거
+#     """엑셀 데이터 불러와 SQLite에 저장"""
+#     try:
+#         df = pd.read_excel(EXCEL_FILE_PATH, dtype=str).fillna("")
+#         df.columns = df.columns.str.strip().str.lower()
+#         if "dosage" not in df.columns:
+#             raise KeyError("Column 'Dosage' not found in Excel file.")
+#         if "weight" in df.columns:
+#             df["weight"] = pd.to_numeric(df["weight"], errors="coerce").fillna(0)
+#         db = get_db()
+#         cursor = db.cursor()
 
-        # 기존 테이블에 REMARK 컬럼이 없으면 추가
-        cursor.execute("PRAGMA table_info(products)")
-        existing_columns = [row[1] for row in cursor.fetchall()]
-        if "remark" not in existing_columns:
-            cursor.execute("ALTER TABLE products ADD COLUMN remark TEXT")
-        db.commit()
+#         # 기존 테이블에 REMARK 컬럼이 없으면 추가
+#         cursor.execute("PRAGMA table_info(products)")
+#         existing_columns = [row[1] for row in cursor.fetchall()]
+#         if "remark" not in existing_columns:
+#             cursor.execute("ALTER TABLE products ADD COLUMN remark TEXT")
+#         db.commit()
 
-        for _, row in df.iterrows():
-            try:
-                cursor.execute('''
-                INSERT OR REPLACE INTO products (item_code, item_name, description, unit_size, color, weight, dosage, remark)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (row.get("item code", ""), row.get("item name", ""), row.get("description", ""),
-                    row.get("unit size", ""), row.get("color", ""), row.get("weight", 0), row.get("dosage", ""), row.get("remark", "")))
-            except sqlite3.IntegrityError as e:
-                if "UNIQUE constraint failed: products.item_code" in str(e):
-                    print(f"Skipping row due to duplicate item_code: {row.get('item code', '')}")
-                else:
-                    raise e
-        db.commit()
-        cursor.close()
+#         for _, row in df.iterrows():
+#             try:
+#                 cursor.execute('''
+#                 INSERT OR REPLACE INTO products (item_code, item_name, description, unit_size, color, weight, dosage, remark)
+#                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+#                 ''', (row.get("item code", ""), row.get("item name", ""), row.get("description", ""),
+#                     row.get("unit size", ""), row.get("color", ""), row.get("weight", 0), row.get("dosage", ""), row.get("remark", "")))
+#             except sqlite3.IntegrityError as e:
+#                 if "UNIQUE constraint failed: products.item_code" in str(e):
+#                     print(f"Skipping row due to duplicate item_code: {row.get('item code', '')}")
+#                 else:
+#                     raise e
+#         db.commit()
+#         cursor.close()
 
-    except Exception as e:
-        print(f"Error migrating products: {e}")
-        flash(f"Error migrating products: {e}", 'error')
+#     except Exception as e:
+#         print(f"Error migrating products: {e}")
+#         flash(f"Error migrating products: {e}", 'error')
 
 def categorize_item_code(item_code):
     """아이템 코드를 해석하여 제품 유형을 반환"""
