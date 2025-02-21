@@ -5,6 +5,8 @@ import shutil
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, g, send_file
 import logging
 import tempfile
+from werkzeug.utils import secure_filename
+
 
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG)
@@ -12,6 +14,7 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 app.secret_key = "secret_key"
 
+MASTER_PASSWORD = "masterkoo6990@@"
 ADMIN_PASSWORD = "admin0123"
 VIEWER_PASSWORD = "usp0123"
 
@@ -31,6 +34,28 @@ else:
 
 # DB_FILE_PATH 경로에 폴더가 없다면 생성
 os.makedirs(os.path.dirname(DB_FILE_PATH), exist_ok=True)
+
+ALLOWED_EXTENSIONS = {'db'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# 렌더 환경 확인 및 업로드 폴더 경로 설정
+if 'RENDER' in os.environ:
+    UPLOAD_FOLDER = '/opt/render/project/src/data'
+else:
+    UPLOAD_FOLDER = r'C:\Users\dhkoo\product_app'
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# 업로드 폴더가 존재하지 않으면 생성
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+ALLOWED_EXTENSIONS = {'db'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # DB 파일이 없으면 복사
 def copy_db_files():
@@ -246,9 +271,10 @@ def autocomplete():
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_product():
-    if "role" not in session or session["role"] != "admin":
+    if "role" not in session or session["role"] not in ['admin', 'master']:
         flash("권한이 없습니다.", "danger")
         return redirect(url_for("index"))
+
     if request.method == 'POST':
         item_code = request.form['item_code']
         item_name = request.form['item_name']
@@ -357,7 +383,7 @@ def logout():
 
 @app.route('/edit/<item_code>', methods=['GET', 'POST'])
 def edit_product(item_code):
-    if "role" not in session or session["role"] != "admin":
+    if "role" not in session or session["role"] not in ['admin', 'master']:
         flash("권한이 없습니다.", "danger")
         return redirect(url_for("index"))
     db = get_db()
@@ -442,7 +468,7 @@ def edit_product(item_code):
 
 @app.route('/delete/<item_code>')
 def delete_product(item_code):
-    if "role" not in session or session["role"] != "admin":
+    if "role" not in session or session["role"] not in ['admin', 'master']:
         flash("권한이 없습니다.", "danger")
         return redirect(url_for("index"))
 
@@ -701,6 +727,10 @@ def upload_db():
 
 @app.route('/download_db')
 def download_db():
+    if "role" not in session or session["role"] not in ["master"]:
+        flash("권한이 없습니다.", "danger")
+        return redirect(url_for("index"))
+
     """claims.db 파일을 다운로드"""
     return send_file(DB_FILE_PATH, as_attachment=True, download_name='claims.db')
 
@@ -752,12 +782,50 @@ def view_product(item_code):
 
     return render_template('view.html', product=product, claims=claims)
 
-# 오류 핸들러 추가
-@app.errorhandler(500)
-def internal_server_error(e):
-    logging.exception("Internal Server Error")
-    return "Internal Server Error", 500
+@app.route('/find_db', methods=['GET', 'POST'])
+def find_db():
+    if "role" not in session or session["role"] not in ["master"]:
+        flash("권한이 없습니다.", "danger")
+        return redirect(url_for("index"))
 
-if __name__ == "__main__":
-    # 로컬에서 실행할 때만 디버그 모드를 활성화
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file part', 'error')
+            return redirect(request.url)
+        file = request.files['file']
+        if file.filename == '':
+            flash('No selected file', 'error')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+            
+            # Backup the current database
+            backup_path = os.path.join(app.config['UPLOAD_FOLDER'], 'claims_backup.db')
+            shutil.copy2(DB_FILE_PATH, backup_path)
+            
+            try:
+                # Replace the current database with the uploaded one
+                shutil.copy2(file_path, DB_FILE_PATH)
+                flash('Database uploaded and replaced successfully', 'success')
+                
+                # Reinitialize the database connection
+                if hasattr(g, '_database'):
+                    g._database.close()
+                    g._database = None
+                
+            except Exception as e:
+                # If an error occurs, restore the backup
+                shutil.copy2(backup_path, DB_FILE_PATH)
+                flash(f'Error occurred: {str(e)}. Original database restored.', 'error')
+            
+            # Clean up
+            os.remove(file_path)
+            os.remove(backup_path)
+            
+            return redirect(url_for('index'))
+    
+    return render_template('find db.html')
+if __name__ == '__main__':
     app.run(debug=True)

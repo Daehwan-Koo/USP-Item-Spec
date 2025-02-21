@@ -28,7 +28,8 @@
         input[type="text"],
         input[type="number"],
         textarea,
-        select { /* select 스타일 추가 */
+        select {
+            /* select 스타일 추가 */
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
@@ -180,34 +181,43 @@
     {% endif %}
     {% endwith %}
 
+    {% set role = session["role"]|default("viewer") %}
+
     <form method="post">
         <div class="form-group">
             <label for="item_code">Item Code:</label>
-            <input type="text" id="item_code" name="item_code" required>
+            <input type="text" id="item_code" name="item_code" required {% if role not in ['master', 'admin'] %}
+                readonly class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="item_name">Item Name:</label>
-            <input type="text" id="item_name" name="item_name">
+            <input type="text" id="item_name" name="item_name" {% if role not in ['master', 'admin'] %} readonly
+                class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="description">Description:</label>
-            <input type="text" id="description" name="description">
+            <input type="text" id="description" name="description" {% if role not in ['master', 'admin'] %} readonly
+                class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="unit_size">Unit Size:</label>
-            <input type="text" id="unit_size" name="unit_size">
+            <input type="text" id="unit_size" name="unit_size" {% if role not in ['master', 'admin'] %} readonly
+                class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="color">Color:</label>
-            <input type="text" id="color" name="color">
+            <input type="text" id="color" name="color" {% if role not in ['master', 'admin'] %} readonly
+                class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="weight">Weight (mg):</label>
-            <input type="number" id="weight" name="weight" step="any">
+            <input type="number" id="weight" name="weight" step="any" {% if role not in ['master', 'admin'] %}
+                readonly class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="remark">Remark:</label>
-            <textarea id="remark" name="remark" rows="4"></textarea>
+            <textarea id="remark" name="remark" rows="4" {% if role not in ['master', 'admin'] %} readonly
+                class="readonly"{% endif %}></textarea>
         </div>
         <div class="claims-container">
             <h3>Claims</h3>
@@ -216,19 +226,23 @@
                     <div class="claim-fields">
                         <div class="form-group">
                             <label>Main Claim:</label>
-                            <input type="text" name="claim_main[]" class="claim-main-input">
+                            <input type="text" name="claim_main[]" class="claim-main-input" {% if role not in ['master',
+                            'admin'] %} readonly class="readonly"{% endif %}>
                         </div>
                         <div class="form-group">
                             <label>Claim Description:</label>
-                            <input type="text" name="claim_description[]" class="claim-description-input">
+                            <input type="text" name="claim_description[]" class="claim-description-input" {% if role not
+                            in ['master', 'admin'] %} readonly class="readonly"{% endif %}>
                         </div>
                         <div class="form-group">
                             <label>Claim Concentration:</label>
-                            <input type="number" name="claim_concentration[]" step="any">
+                            <input type="number" name="claim_concentration[]" step="any" {% if role not in ['master',
+                            'admin'] %} readonly class="readonly"{% endif %}>
                         </div>
                         <div class="form-group">
                             <label>Unit:</label>
-                            <select name="claim_unit[]">
+                            <select name="claim_unit[]" {% if role not in ['master', 'admin'] %} disabled
+                                class="readonly"{% endif %}>
                                 <option value="mg" selected>mg</option>
                                 <option value="IU">IU</option>
                                 <option value="mga-TE">mga-TE</option>
@@ -239,20 +253,27 @@
                         </div>
                         <div class="form-group">
                             <label>Test Result:</label>
-                            <select name="test_result[]">
+                            <select name="test_result[]" {% if role not in ['master', 'admin'] %} disabled
+                                class="readonly"{% endif %}>
                                 <option value="Test O">Test O</option>
                                 <option value="Test X">Test X</option>
                                 <option value="Input">Input</option>
                             </select>
                         </div>
+                        {% if role in [ "admin","master"] %}
                         <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
+            {% if role in [ "admin","master"] %}
             <button type="button" class="add-claim" onclick="addClaim()">Add Claim</button>
+            {% endif %}
         </div>
 
+        {% if role in [ "admin","master"] %}
         <button type="submit">Save</button>
+        {% endif %}
         <a href="{{ url_for('index') }}">Cancel</a>
     </form>
 

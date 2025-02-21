@@ -187,27 +187,33 @@
         </div>
         <div class="form-group">
             <label for="item_name">Item Name:</label>
-            <input type="text" id="item_name" name="item_name" value="{{ product[2] }}">
+            <input type="text" id="item_name" name="item_name" value="{{ product[2] }}" {% if role not in ['master',
+            'admin'] %} readonly class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="description">Description:</label>
-            <input type="text" id="description" name="description" value="{{ product[3] }}">
+            <input type="text" id="description" name="description" value="{{ product[3] }}" {% if role not in ['master',
+            'admin'] %} readonly class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="unit_size">Unit Size:</label>
-            <input type="text" id="unit_size" name="unit_size" value="{{ product[4] }}">
+            <input type="text" id="unit_size" name="unit_size" value="{{ product[4] }}" {% if role not in ['master',
+            'admin'] %} readonly class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="color">Color:</label>
-            <input type="text" id="color" name="color" value="{{ product[5] }}">
+            <input type="text" id="color" name="color" value="{{ product[5] }}" {% if role not in ['master',
+            'admin'] %} readonly class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="weight">Weight (mg):</label>
-            <input type="number" id="weight" name="weight" step="any" value="{{ product[6] }}">
+            <input type="number" id="weight" name="weight" step="any" value="{{ product[6] }}" {% if role not in
+            ['master', 'admin'] %} readonly class="readonly"{% endif %}>
         </div>
         <div class="form-group">
             <label for="remark">Remark:</label>
-            <textarea id="remark" name="remark" rows="4">{{ product[8] }}</textarea>
+            <textarea id="remark" name="remark" rows="4" {% if role not in ['master', 'admin'] %} readonly
+                class="readonly"{% endif %}>{{ product[8] }}</textarea>
         </div>
         <div class="claims-container">
             <h3>Claims</h3>
@@ -218,21 +224,23 @@
                         <div class="form-group">
                             <label>Main Claim:</label>
                             <input type="text" name="claim_main[]" class="claim-main-input" value="{{ claim[0] }}"
-                                {% if role=="viewer" %}readonly class="readonly" {% endif %}>
+                                {% if role not in ['master', 'admin'] %}readonly class="readonly"{% endif %}>
                         </div>
                         <div class="form-group">
                             <label>Claim Description:</label>
                             <input type="text" name="claim_description[]" class="claim-description-input"
-                                value="{{ claim[1] }}" {% if role=="viewer" %}readonly class="readonly" {% endif %}>
+                                value="{{ claim[1] }}" {% if role not in ['master', 'admin'] %}readonly
+                                class="readonly"{% endif %}>
                         </div>
                         <div class="form-group">
                             <label>Claim Concentration:</label>
                             <input type="number" name="claim_concentration[]" step="any" value="{{ claim[2] }}"
-                                {% if role=="viewer" %}readonly class="readonly" {% endif %}>
+                                {% if role not in ['master', 'admin'] %}readonly class="readonly"{% endif %}>
                         </div>
                         <div class="form-group">
                             <label>Unit:</label>
-                            <select name="claim_unit[]" {% if role=="viewer" %}disabled class="readonly" {% endif %}>
+                            <select name="claim_unit[]" {% if role not in ['master', 'admin'] %}disabled
+                                class="readonly"{% endif %}>
                                 <option value="mg" {% if claim[3] == 'mg' %}selected{% endif %}>mg</option>
                                 <option value="IU" {% if claim[3] == 'IU' %}selected{% endif %}>IU</option>
                                 <option value="mga-TE" {% if claim[3] == 'mga-TE' %}selected{% endif %}>mga-TE</option>
@@ -243,25 +251,26 @@
                         </div>
                         <div class="form-group">
                             <label>Test Result:</label>
-                            <select name="test_result[]" {% if role=="viewer" %}disabled class="readonly" {% endif %}>
+                            <select name="test_result[]" {% if role not in ['master', 'admin'] %}disabled
+                                class="readonly"{% endif %}>
                                 <option value="Test O" {% if claim[4] == 'Test O' %}selected{% endif %}>Test O</option>
                                 <option value="Test X" {% if claim[4] == 'Test X' %}selected{% endif %}>Test X</option>
                                 <option value="Input" {% if claim[4] == 'Input' %}selected{% endif %}>Input</option>
                             </select>
                         </div>
-                        {% if role == "admin" %}
+                        {% if role in [ "admin","master"] %}
                         <button type="button" class="remove-claim" onclick="removeClaim(this)">Remove</button>
                         {% endif %}
                     </div>
                 </div>
                 {% endfor %}
             </div>
-            {% if role == "admin" %}
+            {% if role in [ "admin","master"] %}
             <button type="button" class="add-claim" onclick="addClaim()">Add Claim</button>
             {% endif %}
         </div>
 
-        {% if role == "admin" %}
+        {% if role in [ "admin","master"] %}
         <button type="submit">Save</button>
         {% endif %}
         <a href="{{ url_for('index') }}">Cancel</a>
