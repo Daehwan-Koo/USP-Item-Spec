@@ -1,7 +1,7 @@
 import pandas as pd
 import sqlite3
 import os
-import shutil  # 파일 복사를 위한 라이브러리 추가
+import shutil
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, g
 import logging
 import tempfile
@@ -42,26 +42,28 @@ def copy_db_files():
         shutil.copy('claims.db', DB_FILE_PATH)
         print(f"DB file copied to {DB_FILE_PATH}")
 
-# 전역 변수 선언
-first_request = True
+# 전역 변수 선언 및 초기화 플래그 설정
+app_initialized = False
 
 @app.before_request
-def before_first_request():
-    global first_request
-    if first_request:
-        # 초기화 코드 실행
-        initialize_database()
-        load_configurations()
-        # 기타 초기화 작업
-        first_request = False
+def before_request_func():
+    global app_initialized
+    if not app_initialized:
+        with app.app_context():
+            initialize_database()
+            load_configurations()
+        app_initialized = True
 
 def initialize_database():
     # 데이터베이스 초기화 코드
-    pass
+    init_db()
+    copy_db_files()  # DB 파일 복사
+    migrate_products()  # 마이그레이션
 
 def load_configurations():
     # 설정 로드 코드
     pass
+
 @app.before_request
 def require_login():
     allowed_routes = ["login", "autocomplete", "static"]
@@ -135,7 +137,6 @@ def migrate_products():
     try:
         df = pd.read_excel(EXCEL_FILE_PATH, dtype=str).fillna("")
         df.columns = df.columns.str.strip().str.lower()
-
         if "dosage" not in df.columns:
             raise KeyError("Column 'Dosage' not found in Excel file.")
         if "weight" in df.columns:
@@ -664,7 +665,7 @@ def search_products():
     cursor.execute('SELECT DISTINCT item_name FROM products ORDER BY item_name ASC')
     item_name_options = [row[0] for row in cursor.fetchall()]
 
-     # 자동 완성을 위한 데이터베이스 쿼리 추가
+    # 자동 완성을 위한 데이터베이스 쿼리 추가
     item_code_options = [row[0] for row in cursor.execute('SELECT DISTINCT item_code FROM products ORDER BY item_code ASC').fetchall()]
     description_options = [row[0] for row in cursor.execute('SELECT DISTINCT description FROM products ORDER BY description ASC').fetchall()]
     unit_size_options = [row[0] for row in cursor.execute('SELECT DISTINCT unit_size FROM products ORDER BY unit_size ASC').fetchall()]
