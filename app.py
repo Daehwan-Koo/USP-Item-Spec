@@ -1,6 +1,7 @@
 import pandas as pd
 import sqlite3
 import os
+import shutil  # 파일 복사를 위한 라이브러리 추가
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 
 app = Flask(__name__)
@@ -9,14 +10,27 @@ app.secret_key = "secret_key"
 ADMIN_PASSWORD = "admin0123"
 VIEWER_PASSWORD = "usp0123"
 
+# 렌더 디스크 경로 설정
+RENDER_DISK_PATH = '/var/lib'
+EXCEL_FILE_PATH = os.path.join(RENDER_DISK_PATH, 'DB_Excel.xlsx')
+DB_FILE_PATH = os.path.join(RENDER_DISK_PATH, 'claims.db')
+
+# 기존 DB 파일을 렌더 디스크로 복사하는 함수
+def copy_db_files():
+    """DB 파일이 렌더 디스크에 없으면 복사"""
+    if not os.path.exists(EXCEL_FILE_PATH):
+        shutil.copy('DB_Excel.xlsx', EXCEL_FILE_PATH)
+    if not os.path.exists(DB_FILE_PATH):
+        shutil.copy('claims.db', DB_FILE_PATH)
+
+# 앱 시작 시 DB 파일 복사
+# copy_db_files() # 이제 이 함수는 필요할 때만 호출됩니다.
+
 @app.before_request
 def require_login():
     allowed_routes = ["login", "autocomplete", "static"]
     if "role" not in session and request.endpoint not in allowed_routes and not request.path.startswith('/static'):
         return redirect(url_for("login"))
-
-EXCEL_FILE_PATH = "DB_Excel.xlsx"
-DB_FILE_PATH = "claims.db"
 
 def reset_db():
     """기존 DB 파일을 삭제하고 새로 생성"""
@@ -229,6 +243,10 @@ def add_product():
 
             conn.commit()
             flash('Product added successfully!', 'success')
+
+            # 데이터 추가 후 렌더 디스크에 저장
+            copy_db_files()
+
             return redirect(url_for('index'))
 
         except sqlite3.IntegrityError as e:
@@ -352,6 +370,10 @@ def edit_product(item_code):
 
             conn.commit()
             flash('제품 정보가 수정되었습니다!', 'success')
+
+            # 데이터 수정 후 렌더 디스크에 저장
+            copy_db_files()
+
             return redirect(url_for('index'))
 
         except sqlite3.Error as e:
@@ -380,6 +402,9 @@ def delete_product(item_code):
 
         conn.commit()
         flash('제품이 성공적으로 삭제되었습니다!', 'success')
+
+        # 데이터 삭제 후 렌더 디스크에 저장
+        copy_db_files()
 
     except sqlite3.Error as e:
         conn.rollback()
@@ -635,6 +660,13 @@ def search_products():
 def clear_search():
     return redirect(url_for('index'))
 
+@app.route('/save_data', methods=['POST'])
+def save_data():
+    """데이터 저장 버튼 클릭 시 실행되는 함수"""
+    copy_db_files()  # 현재 DB 파일들을 렌더 디스크에 복사
+    flash('Data saved to Render Disk!', 'success')  # 사용자에게 알림 메시지 표시
+    return redirect(url_for('index'))
+
 @app.route('/compare', methods=['POST'])
 def compare_products():
     selected_products = request.form.getlist('item_code[]')
@@ -693,30 +725,3 @@ if __name__ == "__main__":
     init_db()  # 테이블 초기화 (이미 존재하면 아무 작업도 안 함)
     if not db_exists:
         migrate_products()  # 엑셀 데이터 마이그레이션
-        print("✅ Database initialized and data migrated successfully!")
-    else:
-        conn = sqlite3.connect(DB_FILE_PATH)
-        cursor = conn.cursor()
-        cursor.execute("PRAGMA table_info(products)")
-        columns = [col[1] for col in cursor.fetchall()]
-        if 'dosage' not in columns:
-            try:
-                cursor.execute("ALTER TABLE products ADD COLUMN dosage TEXT")
-                conn.commit()
-                print("✅ Dosage column added successfully!")
-            except sqlite3.Error as e:
-                print(f"❗ Error adding dosage column: {e}")
-            else:
-                print("✅ Dosage column already exists.")
-        if 'remark' not in columns:
-            try:
-                cursor.execute("ALTER TABLE products ADD COLUMN remark TEXT")
-                conn.commit()
-                print("✅ Remark column added successfully!")
-            except sqlite3.Error as e:
-                print(f"❗ Error adding remark column: {e}")
-            else:
-                print("✅ Remark column already exists.")
-        conn.close()
-        print("✅ Database exists. Skipping initialization.")
-    app.run(debug=True)
