@@ -526,12 +526,22 @@
         </div>
         <div class="top-bar-info">
             <span>
-                {% if session['role'] == 'admin' %}
-                관리자
+                {% if session['role'] == 'master' %}
+                    Master
+                {% elif session['role'] == 'admin' %}
+                    관리자
                 {% elif session['role'] == 'viewer' %}
-                열람 전용
+                    열람 전용
                 {% endif %}
             </span>
+            <!-- Add Upload DB Button -->
+            <form action="{{ url_for('upload_db') }}" method="post" style="display:inline;">
+                <button type="submit" class="logout-button">Upload DB</button>
+            </form>
+
+            <!-- Add Download DB Button -->
+            <a href="{{ url_for('download_db') }}" class="logout-button">Download DB</a>
+
             <a href="{{ url_for('logout') }}" class="logout-button">로그아웃</a>
         </div>
     </div>

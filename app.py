@@ -2,7 +2,7 @@ import pandas as pd
 import sqlite3
 import os
 import shutil
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, g
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, g, send_file
 import logging
 import tempfile
 
@@ -333,7 +333,11 @@ def add_product():
 def login():
     if request.method == "POST":
         password = request.form["password"]
-        if password == ADMIN_PASSWORD:
+        if password == MASTER_PASSWORD:
+            session["role"] = "master"
+            flash("마스터 계정으로 로그인했습니다!", "success")
+            return redirect(url_for("index"))
+        elif password == ADMIN_PASSWORD:
             session["role"] = "admin"
             flash("관리자로 로그인했습니다!", "success")
             return redirect(url_for("index"))
@@ -343,8 +347,6 @@ def login():
             return redirect(url_for("index"))
         else:
             flash("잘못된 비밀번호입니다. 다시 시도하세요.", "danger")
-        return render_template("login.html")
-
     return render_template("login.html")
 
 @app.route("/logout")
@@ -682,12 +684,25 @@ def search_products():
 def clear_search():
     return redirect(url_for('index'))
 
-@app.route('/save_data', methods=['POST'])
-def save_data():
-    """데이터 저장 버튼 클릭 시 실행되는 함수"""
-    copy_db_files()  # 현재 DB 파일들을 렌더 디스크에 복사
-    flash('Data saved to Render Disk!', 'success')  # 사용자에게 알림 메시지 표시
-    return redirect(url_for('index'))
+@app.route('/upload_db', methods=['POST'])
+def upload_db():
+    """업로드 버튼을 클릭하면 claims.db를 렌더 디스크 경로에 저장"""
+    if "role" not in session or session["role"] not in ["admin", "master"]:
+        flash("권한이 없습니다.", "danger")
+        return redirect(url_for("index"))
+
+    try:
+        copy_db_files()
+        flash("Database uploaded successfully to Render Disk!", "success")
+    except Exception as e:
+        flash(f"Error uploading database: {str(e)}", "danger")
+
+    return redirect(url_for("index"))
+
+@app.route('/download_db')
+def download_db():
+    """claims.db 파일을 다운로드"""
+    return send_file(DB_FILE_PATH, as_attachment=True, download_name='claims.db')
 
 @app.route('/compare', methods=['POST'])
 def compare_products():
