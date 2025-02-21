@@ -64,9 +64,9 @@
             padding: 10px;
             position: absolute;
             z-index: 1000;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
             opacity: 0;
             transition: opacity 0.3s;
         }
@@ -74,8 +74,8 @@
         .tooltip .tooltiptext::after {
             content: "";
             position: absolute;
-            top: 100%;
-            left: 50%;
+            top: 50%;
+            left: 100%;
             margin-left: -5px;
             border-width: 5px;
             border-style: solid;
@@ -572,6 +572,7 @@
                     열람 전용
                 {% endif %}
             </span>
+            {% if session['role'] in ['admin', 'master'] %}
             <!-- Add Upload DB Button -->
             <form action="{{ url_for('upload_db') }}" method="post" style="display:inline;">
                 <button type="submit" class="logout-button">Upload DB</button>
@@ -583,7 +584,10 @@
             <!-- Add Find DB Button -->
             <a href="{{ url_for('find_db') }}" class="logout-button">Find DB</a>
 
+            {% endif %}
+
             <a href="{{ url_for('logout') }}" class="logout-button">로그아웃</a>
+
         </div>
     </div>
     <div class="product-header">
