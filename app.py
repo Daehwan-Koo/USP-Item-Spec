@@ -141,7 +141,6 @@ def migrate_products():
             raise KeyError("Column 'Dosage' not found in Excel file.")
         if "weight" in df.columns:
             df["weight"] = pd.to_numeric(df["weight"], errors="coerce").fillna(0)
-
         db = get_db()
         cursor = db.cursor()
 
@@ -250,7 +249,6 @@ def add_product():
     if "role" not in session or session["role"] != "admin":
         flash("권한이 없습니다.", "danger")
         return redirect(url_for("index"))
-
     if request.method == 'POST':
         item_code = request.form['item_code']
         item_name = request.form['item_name']
@@ -360,7 +358,6 @@ def edit_product(item_code):
     if "role" not in session or session["role"] != "admin":
         flash("권한이 없습니다.", "danger")
         return redirect(url_for("index"))
-
     db = get_db()
     cursor = db.cursor()
 
