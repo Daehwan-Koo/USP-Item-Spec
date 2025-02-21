@@ -1,7 +1,13 @@
 import pandas as pd
 import sqlite3
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+import shutil  # 파일 복사를 위한 라이브러리 추가
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, g
+import logging
+import tempfile
+
+# 로깅 설정
+logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
@@ -9,26 +15,81 @@ app.secret_key = "secret_key"
 ADMIN_PASSWORD = "admin0123"
 VIEWER_PASSWORD = "usp0123"
 
+# 렌더 환경 확인 및 DB 경로 설정
+if 'RENDER' in os.environ:
+    # 렌더 환경에서는 임시 디렉토리에 저장
+    RENDER_DISK_PATH = tempfile.gettempdir()
+    DB_FILE_PATH = os.path.join(RENDER_DISK_PATH, 'claims.db')
+    EXCEL_FILE_PATH = os.path.join(RENDER_DISK_PATH, 'DB_Excel.xlsx')
+    print(f"Running on Render, DB path: {DB_FILE_PATH}")
+else:
+    # 로컬 환경에서는 상대 경로 사용
+    RENDER_DISK_PATH = '/var/lib'  # 로컬 개발 시 적절한 경로로 변경
+    DB_FILE_PATH = 'claims.db'
+    EXCEL_FILE_PATH = 'DB_Excel.xlsx'
+    print(f"Running locally, DB path: {DB_FILE_PATH}")
+
+# DB_FILE_PATH 경로에 폴더가 없다면 생성
+os.makedirs(os.path.dirname(DB_FILE_PATH), exist_ok=True)
+
+# DB 파일이 없으면 복사
+def copy_db_files():
+    """DB 파일이 지정 경로에 없으면 복사"""
+    if not os.path.exists(EXCEL_FILE_PATH):
+        shutil.copy('DB_Excel.xlsx', EXCEL_FILE_PATH)
+        print(f"Excel file copied to {EXCEL_FILE_PATH}")
+    if not os.path.exists(DB_FILE_PATH):
+        shutil.copy('claims.db', DB_FILE_PATH)
+        print(f"DB file copied to {DB_FILE_PATH}")
+
+@app.before_first_request
+def initialize():
+    """최초 요청 시 DB 초기화 및 파일 복사"""
+    copy_db_files()
+    init_db()
+    migrate_products()
+
 @app.before_request
 def require_login():
     allowed_routes = ["login", "autocomplete", "static"]
     if "role" not in session and request.endpoint not in allowed_routes and not request.path.startswith('/static'):
         return redirect(url_for("login"))
 
-EXCEL_FILE_PATH = "DB_Excel.xlsx"
-DB_FILE_PATH = "claims.db"
+def get_db():
+    """매 요청마다 DB 연결을 생성"""
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DB_FILE_PATH)
+        db.row_factory = sqlite3.Row  # 컬럼명으로 접근 가능하도록 설정
+    return db
+
+@app.teardown_appcontext
+def close_connection(exception):
+    """요청 종료 시 DB 연결을 닫음"""
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
+
+def query_db(query, args=(), one=False):
+    """DB 쿼리 실행 헬퍼 함수"""
+    db = get_db()
+    cursor = db.execute(query, args)
+    rv = cursor.fetchall()
+    cursor.close()
+    return (rv[0] if rv else None) if one else rv
 
 def reset_db():
     """기존 DB 파일을 삭제하고 새로 생성"""
+    db = get_db()
+    db.close()  # 먼저 DB 연결을 닫음
     if os.path.exists(DB_FILE_PATH):
         os.remove(DB_FILE_PATH)
     init_db()
 
 def init_db():
     """SQLite DB 초기화"""
-    conn = sqlite3.connect(DB_FILE_PATH)
-    cursor = conn.cursor()
-
+    db = get_db()
+    cursor = db.cursor()
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,8 +103,6 @@ def init_db():
         remark TEXT
     )
     ''')
-
-    # claims 테이블에 claim_unit 및 test_result 컬럼 추가
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS claims (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,49 +110,56 @@ def init_db():
         claim_main TEXT,
         claim_description TEXT,
         claim_concentration REAL,
-        claim_unit TEXT DEFAULT 'mg',  -- 기본값으로 'mg' 설정
+        claim_unit TEXT DEFAULT 'mg',
         test_result TEXT,
         FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
     )
     ''')
-
-    conn.commit()
-    conn.close()
+    db.commit()
+    cursor.close()
 
 def migrate_products():
     """엑셀 데이터 불러와 SQLite에 저장"""
-    df = pd.read_excel(EXCEL_FILE_PATH, dtype=str).fillna("")
-    df.columns = df.columns.str.strip().str.lower()
-    if "dosage" not in df.columns:
-        raise KeyError("Column 'Dosage' not found in Excel file.")
-    if "weight" in df.columns:
-        df["weight"] = pd.to_numeric(df["weight"], errors="coerce").fillna(0)
-    conn = sqlite3.connect(DB_FILE_PATH)
-    cursor = conn.cursor()
-    # 기존 테이블에 REMARK 컬럼이 없으면 추가
-    cursor.execute("PRAGMA table_info(products)")
-    existing_columns = [row[1] for row in cursor.fetchall()]
-    if "remark" not in existing_columns:
-        cursor.execute("ALTER TABLE products ADD COLUMN remark TEXT")
-    conn.commit()
-    for _, row in df.iterrows():
-        try:
-            cursor.execute('''
-            INSERT OR REPLACE INTO products (item_code, item_name, description, unit_size, color, weight, dosage, remark)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (row.get("item code", ""), row.get("item name", ""), row.get("description", ""),
-                row.get("unit size", ""), row.get("color", ""), row.get("weight", 0), row.get("dosage", ""), row.get("remark", "")))
-        except sqlite3.IntegrityError as e:
-            if "UNIQUE constraint failed: products.item_code" in str(e):
-                print(f"Skipping row due to duplicate item_code: {row.get('item code', '')}")
-            else:
-                raise e
-    conn.commit()
-    conn.close()
+    try:
+        df = pd.read_excel(EXCEL_FILE_PATH, dtype=str).fillna("")
+        df.columns = df.columns.str.strip().str.lower()
+
+        if "dosage" not in df.columns:
+            raise KeyError("Column 'Dosage' not found in Excel file.")
+        if "weight" in df.columns:
+            df["weight"] = pd.to_numeric(df["weight"], errors="coerce").fillna(0)
+
+        db = get_db()
+        cursor = db.cursor()
+
+        # 기존 테이블에 REMARK 컬럼이 없으면 추가
+        cursor.execute("PRAGMA table_info(products)")
+        existing_columns = [row[1] for row in cursor.fetchall()]
+        if "remark" not in existing_columns:
+            cursor.execute("ALTER TABLE products ADD COLUMN remark TEXT")
+        db.commit()
+
+        for _, row in df.iterrows():
+            try:
+                cursor.execute('''
+                INSERT OR REPLACE INTO products (item_code, item_name, description, unit_size, color, weight, dosage, remark)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (row.get("item code", ""), row.get("item name", ""), row.get("description", ""),
+                    row.get("unit size", ""), row.get("color", ""), row.get("weight", 0), row.get("dosage", ""), row.get("remark", "")))
+            except sqlite3.IntegrityError as e:
+                if "UNIQUE constraint failed: products.item_code" in str(e):
+                    print(f"Skipping row due to duplicate item_code: {row.get('item code', '')}")
+                else:
+                    raise e
+        db.commit()
+        cursor.close()
+
+    except Exception as e:
+        print(f"Error migrating products: {e}")
+        flash(f"Error migrating products: {e}", 'error')
 
 def categorize_item_code(item_code):
     """아이템 코드를 해석하여 제품 유형을 반환"""
-    parts = item_code.split('-') # '-' 기준으로 분할
     if "A-TB-" in item_code:
         return "Tablet"
     elif "A-SG-" in item_code:
@@ -120,46 +186,51 @@ def autocomplete():
     query = request.args.get("query", "").strip()
     field = request.args.get("field", "claim_main")
     main_claim = request.args.get("main_claim", "")
-    conn = sqlite3.connect(DB_FILE_PATH)
-    cursor = conn.cursor()
-    if field == 'claim_main':
-        cursor.execute('''
-        SELECT DISTINCT claim_main
-        FROM claims
-        WHERE claim_main LIKE ?
-        ORDER BY claim_main ASC
-        LIMIT 10
-        ''', ('%' + query + '%',))
-    elif field == 'claim_description':
-        if main_claim:
+    db = get_db()
+    cursor = db.cursor()
+    try:
+        if field == 'claim_main':
             cursor.execute('''
-            SELECT DISTINCT claim_description
+            SELECT DISTINCT claim_main
             FROM claims
-            WHERE claim_main = ? AND claim_description LIKE ?
-            ORDER BY claim_description ASC
-            LIMIT 10
-            ''', (main_claim, '%' + query + '%'))
-        else:
-            cursor.execute('''
-            SELECT DISTINCT claim_description
-            FROM claims
-            WHERE claim_description LIKE ?
-            ORDER BY claim_description ASC
+            WHERE claim_main LIKE ?
+            ORDER BY claim_main ASC
             LIMIT 10
             ''', ('%' + query + '%',))
-    else:  # 다른 필드에 대한 자동 완성 처리
-        table = 'products'
-        column = field
-        cursor.execute(f'''
-            SELECT DISTINCT {column}
-            FROM {table}
-            WHERE {column} LIKE ?
-            ORDER BY {column} ASC
-            LIMIT 50
-        ''', ('%' + query + '%',))
-    suggestions = [row[0] for row in cursor.fetchall()]
-    conn.close()
-    return jsonify(suggestions)
+        elif field == 'claim_description':
+            if main_claim:
+                cursor.execute('''
+                SELECT DISTINCT claim_description
+                FROM claims
+                WHERE claim_main = ? AND claim_description LIKE ?
+                ORDER BY claim_description ASC
+                LIMIT 10
+                ''', (main_claim, '%' + query + '%'))
+            else:
+                cursor.execute('''
+                SELECT DISTINCT claim_description
+                FROM claims
+                WHERE claim_description LIKE ?
+                ORDER BY claim_description ASC
+                LIMIT 10
+                ''', ('%' + query + '%',))
+        else:  # 다른 필드에 대한 자동 완성 처리
+            table = 'products'
+            column = field
+            cursor.execute(f'''
+                SELECT DISTINCT {column}
+                FROM {table}
+                WHERE {column} LIKE ?
+                ORDER BY {column} ASC
+                LIMIT 50
+            ''', ('%' + query + '%',))
+        suggestions = [row[0] for row in cursor.fetchall()]
+        return jsonify(suggestions)
+    except Exception as e:
+        print(f"Autocomplete error: {e}")
+        return jsonify([])
+    finally:
+        cursor.close()
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_product():
@@ -198,8 +269,8 @@ def add_product():
         else:
             dosage = 'Unknown'
 
-        conn = sqlite3.connect(DB_FILE_PATH)
-        cursor = conn.cursor()
+        db = get_db()
+        cursor = db.cursor()
 
         try:
             cursor.execute('''
@@ -227,12 +298,13 @@ def add_product():
                     VALUES (?, ?, ?, ?, ?, ?)
                     ''', (product_id, claim_main, claim_description, claim_concentration, claim_unit, test_result))
 
-            conn.commit()
+            db.commit()
             flash('Product added successfully!', 'success')
+
             return redirect(url_for('index'))
 
         except sqlite3.IntegrityError as e:
-            conn.rollback()
+            db.rollback()
             if "UNIQUE constraint failed: products.item_code" in str(e):
                 flash('Item Code already exists. Please use a unique Item Code.', 'error')
             else:
@@ -240,7 +312,7 @@ def add_product():
             return render_template('add.html')
 
         finally:
-            conn.close()
+            cursor.close()
 
     claim_unit_options = ['mg', 'IU', 'mga-TE', 'mgRAE', 'mgNE', 'mgDFE']
     test_result_options = ['Test O', 'Test X', 'Input']
@@ -276,8 +348,8 @@ def edit_product(item_code):
         flash("권한이 없습니다.", "danger")
         return redirect(url_for("index"))
 
-    conn = sqlite3.connect(DB_FILE_PATH)
-    cursor = conn.cursor()
+    db = get_db()
+    cursor = db.cursor()
 
     if request.method == 'GET':
         cursor.execute('SELECT * FROM products WHERE item_code = ?', (item_code,))
@@ -285,10 +357,9 @@ def edit_product(item_code):
 
         if not product:
             flash("해당 제품을 찾을 수 없습니다.", "danger")
-            conn.close()
+            cursor.close()
             return redirect(url_for("index"))
 
-        # claim_unit, test_result 추가
         cursor.execute('''
         SELECT claim_main, claim_description, claim_concentration, claim_unit, test_result
         FROM claims
@@ -297,11 +368,9 @@ def edit_product(item_code):
         ''', (item_code,))
         claims = cursor.fetchall()
 
-        conn.close()
-
-        # 단위 옵션과 테스트 결과 옵션 추가
         claim_unit_options = ['mg', 'IU', 'mga-TE', 'mgRAE', 'mgNE', 'mgDFE']
         test_result_options = ['Test O', 'Test X', 'Input']
+
         return render_template('edit.html', product=product, claims=claims, claim_unit_options=claim_unit_options, test_result_options=test_result_options)
 
     elif request.method == 'POST':
@@ -319,48 +388,45 @@ def edit_product(item_code):
             WHERE item_code=?
             ''', (item_name, description, unit_size, color, weight, dosage, remark, item_code))
 
-            # 기존 클레임 삭제
             cursor.execute('''
             DELETE FROM claims
             WHERE product_id IN (SELECT id FROM products WHERE item_code = ?)
             ''', (item_code,))
 
-            # 새 클레임 추가
             claim_mains = request.form.getlist('claim_main[]')
             claim_descriptions = request.form.getlist('claim_description[]')
             claim_concentrations = request.form.getlist('claim_concentration[]')
-            claim_units = request.form.getlist('claim_unit[]')  # 클레임 단위 추가
-            test_results = request.form.getlist('test_result[]')  # 테스트 결과 추가
+            claim_units = request.form.getlist('claim_unit[]')
+            test_results = request.form.getlist('test_result[]')
 
             cursor.execute('SELECT id FROM products WHERE item_code = ?', (item_code,))
-            product_id = cursor.fetchone()
+            product_id = cursor.fetchone()[0]
 
-            if product_id:
-                product_id = product_id[0]
-                for i in range(len(claim_mains)):
-                    claim_main = claim_mains[i]
-                    claim_description = claim_descriptions[i]
-                    claim_concentration = claim_concentrations[i]
-                    claim_unit = claim_units[i] if i < len(claim_units) else 'mg'  # 단위가 없는 경우 기본값 'mg' 사용
-                    test_result = test_results[i] if i < len(test_results) else None  # 테스트 결과가 없는 경우 None 사용
+            for i in range(len(claim_mains)):
+                claim_main = claim_mains[i]
+                claim_description = claim_descriptions[i]
+                claim_concentration = claim_concentrations[i]
+                claim_unit = claim_units[i] if i < len(claim_units) else 'mg'
+                test_result = test_results[i] if i < len(test_results) else None
 
-                    if claim_main and claim_description and claim_concentration:
-                        cursor.execute('''
-                        INSERT INTO claims (product_id, claim_main, claim_description, claim_concentration, claim_unit, test_result)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                        ''', (product_id, claim_main, claim_description, claim_concentration, claim_unit, test_result))
+                if claim_main and claim_description and claim_concentration:
+                    cursor.execute('''
+                    INSERT INTO claims (product_id, claim_main, claim_description, claim_concentration, claim_unit, test_result)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ''', (product_id, claim_main, claim_description, claim_concentration, claim_unit, test_result))
 
-            conn.commit()
+            db.commit()
             flash('제품 정보가 수정되었습니다!', 'success')
+
             return redirect(url_for('index'))
 
         except sqlite3.Error as e:
-            conn.rollback()
+            db.rollback()
             flash(f'오류 발생: {str(e)}', 'danger')
             return render_template('edit.html', product=request.form, claims=[])
 
         finally:
-            conn.close()
+            cursor.close()
 
 @app.route('/delete/<item_code>')
 def delete_product(item_code):
@@ -368,72 +434,45 @@ def delete_product(item_code):
         flash("권한이 없습니다.", "danger")
         return redirect(url_for("index"))
 
-    conn = sqlite3.connect(DB_FILE_PATH)
-    cursor = conn.cursor()
+    db = get_db()
+    cursor = db.cursor()
 
     try:
-        # 제품 삭제 전에 연결된 클레임 먼저 삭제
         cursor.execute('DELETE FROM claims WHERE product_id IN (SELECT id FROM products WHERE item_code = ?)', (item_code,))
-
-        # 제품 삭제
         cursor.execute('DELETE FROM products WHERE item_code = ?', (item_code,))
 
-        conn.commit()
+        db.commit()
         flash('제품이 성공적으로 삭제되었습니다!', 'success')
 
     except sqlite3.Error as e:
-        conn.rollback()
+        db.rollback()
         flash(f'오류 발생: {str(e)}', 'danger')
 
     finally:
-        conn.close()
+        cursor.close()
 
     return redirect(url_for('index'))
 
-def categorize_item_code(item_code):
-    """아이템 코드를 해석하여 제품 유형을 반환"""
-    if "A-TB-" in item_code:
-        return "Tablet"
-    elif "A-SG-" in item_code:
-        return "Softgel"
-    elif "A-HC-" in item_code:
-        return "Hard Capsule"
-    elif "A-SH-" in item_code:
-        return "Sachet"
-    elif "A-PW-" in item_code:
-        return "Powder"
-    elif "A-LQ-" in item_code:
-        return "Liquid"
-    elif "PH-TB" in item_code:
-        return "PH Tablet"
-    elif "PH-HC" in item_code:
-        return "PH Harc Capsule"
-    elif "PH-SG" in item_code:
-        return "PH Softgel"
-    else:
-        return None
-
 @app.route('/')
 def index():
-    conn = sqlite3.connect(DB_FILE_PATH)
-    cursor = conn.cursor()
+    db = get_db()
+    cursor = db.cursor()
     cursor.execute('SELECT item_code, item_name, description, unit_size, color, weight, dosage, remark FROM products ORDER BY item_code ASC')
     products = cursor.fetchall()
-    products = [(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7] if p[7] is not None else '') for p in products]
     product_categories = {}
-    for product in products:
-        product_categories[product[0]] = categorize_item_code(product[0])
     product_claims = {}
+
     for product in products:
+        item_code = product[0]
+        product_categories[item_code] = categorize_item_code(item_code)
         cursor.execute('''
         SELECT claim_main, claim_description, claim_concentration, claim_unit, test_result
         FROM claims
         JOIN products ON claims.product_id = products.id
         WHERE products.item_code = ?
-        ''', (product[0],))
-        claims = cursor.fetchall()
-        product_claims[product[0]] = claims
-    conn.close()
+        ''', (item_code,))
+        product_claims[item_code] = cursor.fetchall()
+
     return render_template('index.html', products=products, product_claims=product_claims, product_categories=product_categories, search_filters=request.args)
 
 @app.route('/search', methods=['GET'])
@@ -460,8 +499,8 @@ def search_products():
     # 검색 필터에서 None 값인 필터 제거
     filters = {k: v for k, v in filters.items() if v is not None and (isinstance(v, list) or str(v).strip() != "")}
 
-    conn = sqlite3.connect(DB_FILE_PATH)
-    cursor = conn.cursor()
+    db = get_db()
+    cursor = db.cursor()
 
     base_query = """
     SELECT DISTINCT p.item_code, p.item_name, p.description, p.unit_size, p.color, p.weight, p.dosage, p.remark
@@ -619,8 +658,6 @@ def search_products():
     unit_size_options = [row[0] for row in cursor.execute('SELECT DISTINCT unit_size FROM products ORDER BY unit_size ASC').fetchall()]
     color_options = [row[0] for row in cursor.execute('SELECT DISTINCT color FROM products ORDER BY color ASC').fetchall()]
 
-    conn.close()
-
     # 단위 옵션 추가
     claim_unit_options = ['mg', 'IU', 'mga-TE', 'mgRAE', 'mgNE', 'mgDFE']
 
@@ -628,18 +665,25 @@ def search_products():
                            product_categories=product_categories, search_filters=filters,
                            claim_main_options=claim_main_options, item_name_options=item_name_options,
                            item_code_options=item_code_options, description_options=description_options,
-                           unit_size_options=unit_size_options, color_options=color_options,  # 자동완성 옵션 추가
-                           claim_unit_options=claim_unit_options)  # 단위 옵션 전달
+                           unit_size_options=unit_size_options, color_options=color_options,
+                           claim_unit_options=claim_unit_options)
 
 @app.route('/clear')
 def clear_search():
     return redirect(url_for('index'))
 
+@app.route('/save_data', methods=['POST'])
+def save_data():
+    """데이터 저장 버튼 클릭 시 실행되는 함수"""
+    copy_db_files()  # 현재 DB 파일들을 렌더 디스크에 복사
+    flash('Data saved to Render Disk!', 'success')  # 사용자에게 알림 메시지 표시
+    return redirect(url_for('index'))
+
 @app.route('/compare', methods=['POST'])
 def compare_products():
     selected_products = request.form.getlist('item_code[]')
-    conn = sqlite3.connect(DB_FILE_PATH)
-    cursor = conn.cursor()
+    db = get_db()
+    cursor = db.cursor()
     products = []
     claims = {}
     for item_code in selected_products:
@@ -659,21 +703,18 @@ def compare_products():
         ''', (item_code,))
         product_claims = cursor.fetchall()
         claims[item_code] = product_claims
-    conn.close()
     return render_template('compare.html', products=products, claims=claims)
 
-# 새로운 뷰 페이지 라우트
 @app.route('/view/<item_code>')
 def view_product(item_code):
-    conn = sqlite3.connect(DB_FILE_PATH)
-    cursor = conn.cursor()
+    db = get_db()
+    cursor = db.cursor()
 
     cursor.execute('SELECT * FROM products WHERE item_code = ?', (item_code,))
     product = cursor.fetchone()
 
     if not product:
         flash("해당 제품을 찾을 수 없습니다.", "danger")
-        conn.close()
         return redirect(url_for("index"))
 
     cursor.execute('''
@@ -684,39 +725,14 @@ def view_product(item_code):
     ''', (item_code,))
     claims = cursor.fetchall()
 
-    conn.close()
-
     return render_template('view.html', product=product, claims=claims)
 
+# 오류 핸들러 추가
+@app.errorhandler(500)
+def internal_server_error(e):
+    logging.exception("Internal Server Error")
+    return "Internal Server Error", 500
+
 if __name__ == "__main__":
-    db_exists = os.path.exists(DB_FILE_PATH)
-    init_db()  # 테이블 초기화 (이미 존재하면 아무 작업도 안 함)
-    if not db_exists:
-        migrate_products()  # 엑셀 데이터 마이그레이션
-        print("✅ Database initialized and data migrated successfully!")
-    else:
-        conn = sqlite3.connect(DB_FILE_PATH)
-        cursor = conn.cursor()
-        cursor.execute("PRAGMA table_info(products)")
-        columns = [col[1] for col in cursor.fetchall()]
-        if 'dosage' not in columns:
-            try:
-                cursor.execute("ALTER TABLE products ADD COLUMN dosage TEXT")
-                conn.commit()
-                print("✅ Dosage column added successfully!")
-            except sqlite3.Error as e:
-                print(f"❗ Error adding dosage column: {e}")
-            else:
-                print("✅ Dosage column already exists.")
-        if 'remark' not in columns:
-            try:
-                cursor.execute("ALTER TABLE products ADD COLUMN remark TEXT")
-                conn.commit()
-                print("✅ Remark column added successfully!")
-            except sqlite3.Error as e:
-                print(f"❗ Error adding remark column: {e}")
-            else:
-                print("✅ Remark column already exists.")
-        conn.close()
-        print("✅ Database exists. Skipping initialization.")
+    # 로컬에서 실행할 때만 디버그 모드를 활성화
     app.run(debug=True)
