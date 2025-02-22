@@ -732,23 +732,11 @@ import os
 import shutil
 from flask import Flask, request, redirect, url_for, flash, session
 
-@app.route('/upload_db', methods=['POST'])
-def upload_db():
-    """업로드 버튼을 클릭하면 업로드된 claims.db를 저장하고 기존 DB를 대체"""
+@app.route('/save_db', methods=['POST'])
+def save_db():
+    """현재 DB를 저장하여 claims.db 파일을 덮어쓰기"""
     if "role" not in session or session["role"] not in ["admin", "master"]:
         flash("권한이 없습니다.", "danger")
-        return redirect(url_for("index"))
-
-    # 업로드된 파일이 있는지 확인
-    if 'file' not in request.files:
-        flash("파일이 업로드되지 않았습니다.", "danger")
-        return redirect(url_for("index"))
-
-    file = request.files['file']
-
-    # 파일명이 claims.db인지 확인
-    if file.filename != 'claims.db':
-        flash("잘못된 파일명입니다. 'claims.db' 파일을 업로드해야 합니다.", "danger")
         return redirect(url_for("index"))
 
     try:
@@ -758,29 +746,47 @@ def upload_db():
         else:
             db_path = r'C:\Users\dhkoo\product_app\claims.db'
 
-        # 🔹 현재 DB 연결 닫기 (사용 중 오류 방지)
-        try:
-            conn = sqlite3.connect(db_path)
-            conn.close()
-        except Exception as e:
-            flash(f"Warning: Unable to close existing DB connection: {str(e)}", "warning")
+        backup_path = db_path + ".bak"  # 기존 DB 백업 파일 경로
+        temp_path = db_path + ".tmp"  # 임시 저장 파일 경로
 
-        # 🔹 기존 DB를 임시 파일로 백업
-        temp_path = db_path + ".tmp"
+        # 🔹 현재 DB 연결 닫기 (파일 사용 중 문제 방지)
+        if hasattr(g, '_database'):
+            g._database.close()
+            g._database = None
+
+        # 🔹 기존 DB를 백업
         if os.path.exists(db_path):
-            os.rename(db_path, temp_path)  # 기존 DB를 임시 파일로 변경 (사용 중 문제 해결)
+            shutil.copy2(db_path, backup_path)  # 기존 DB 백업
 
-        # 🔹 업로드된 파일을 저장
-        file.save(db_path)
+        # 🔹 새로운 DB를 저장하기 전에 임시 파일로 먼저 저장
+        shutil.copy2(db_path, temp_path)
 
-        # 🔹 기존 임시 파일 삭제
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+        # 🔹 저장된 파일이 올바른 SQLite 데이터베이스인지 확인
+        try:
+            conn = sqlite3.connect(temp_path)
+            conn.execute("PRAGMA integrity_check")  # 데이터베이스 무결성 체크
+            conn.close()
+        except sqlite3.DatabaseError:
+            flash("Error: 저장된 파일이 유효한 SQLite 데이터베이스가 아닙니다.", "danger")
+            os.remove(temp_path)  # 손상된 파일 삭제
+            return redirect(url_for("index"))
 
-        flash(f"Database uploaded and replaced at: {db_path}", "success")
+        # 🔹 검증된 DB 파일을 기존 위치에 저장
+        shutil.move(temp_path, db_path)
+
+        flash(f"Database saved successfully at: {db_path}", "success")
+
+        # 🔹 DB 경로 재설정 (추후 사용을 위해)
+        global DB_FILE_PATH
+        DB_FILE_PATH = db_path
+
+        # 🔹 DB 연결을 초기화하여 새로운 DB 파일 사용
+        if hasattr(g, '_database'):
+            g._database.close()
+            g._database = None
 
     except Exception as e:
-        flash(f"Error uploading database: {str(e)}", "danger")
+        flash(f"Error saving database: {str(e)}", "danger")
 
     return redirect(url_for("index"))
 

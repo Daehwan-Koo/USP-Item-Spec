@@ -573,9 +573,9 @@
                 {% endif %}
             </span>
             {% if session['role'] in ['admin', 'master'] %}
-            <!-- Add Upload DB Button -->
-            <form action="{{ url_for('upload_db') }}" method="post" style="display:inline;">
-                <button type="submit" class="logout-button">Upload DB</button>
+            <!-- Add Save DB Button -->
+            <form action="{{ url_for('save_db') }}" method="post" style="display:inline;">
+                <button type="submit" class="logout-button">Save DB</button>
             </form>
 
             <!-- Add Download DB Button -->
