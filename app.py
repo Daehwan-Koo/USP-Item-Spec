@@ -352,7 +352,7 @@ def add_product():
         finally:
             cursor.close()
 
-    claim_unit_options = ['mg', 'IU', 'mga-TE', 'mgRAE', 'mgNE', 'mgDFE']
+    claim_unit_options = ['mg', 'mcg', 'IU', 'mga-TE', 'mgRAE', 'mcgRAE', 'mgNE', 'mcgNE', 'mgDFE', 'mcgDFE']
     test_result_options = ['Test O', 'Test X', 'Input']
     return render_template('add.html', claim_unit_options=claim_unit_options, test_result_options=test_result_options)
 
@@ -407,7 +407,7 @@ def edit_product(item_code):
         ''', (item_code,))
         claims = cursor.fetchall()
 
-        claim_unit_options = ['mg', 'IU', 'mga-TE', 'mgRAE', 'mgNE', 'mgDFE']
+        claim_unit_options = ['mg', 'mcg', 'IU', 'mga-TE', 'mgRAE', 'mcgRAE', 'mgNE', 'mcgNE', 'mgDFE', 'mcgDFE']
         test_result_options = ['Test O', 'Test X', 'Input']
 
          # 🔹 추가: 기존 필터 URL을 세션에 저장 (이전 검색 화면 유지)
@@ -519,7 +519,26 @@ def index():
         ''', (item_code,))
         product_claims[item_code] = cursor.fetchall()
 
-    return render_template('index.html', products=products, product_claims=product_claims, product_categories=product_categories, search_filters=request.args)
+    # 자동완성을 위한 데이터 준비
+    cursor.execute('SELECT DISTINCT claim_main FROM claims ORDER BY claim_main ASC')
+    claim_main_options = [row[0] for row in cursor.fetchall()]
+
+    cursor.execute('SELECT DISTINCT item_name FROM products ORDER BY item_name ASC')
+    item_name_options = [row[0] for row in cursor.fetchall()]
+
+    # 자동 완성을 위한 데이터베이스 쿼리 추가
+    item_code_options = [row[0] for row in cursor.execute('SELECT DISTINCT item_code FROM products ORDER BY item_code ASC').fetchall()]
+    description_options = [row[0] for row in cursor.execute('SELECT DISTINCT description FROM products ORDER BY description ASC').fetchall()]
+    unit_size_options = [row[0] for row in cursor.execute('SELECT DISTINCT unit_size FROM products ORDER BY unit_size ASC').fetchall()]
+    color_options = [row[0] for row in cursor.execute('SELECT DISTINCT color FROM products ORDER BY color ASC').fetchall()]
+
+    # 단위 옵션 추가
+    claim_unit_options = ['mg', 'mcg', 'IU', 'mga-TE', 'mgRAE', 'mcgRAE', 'mgNE', 'mcgNE', 'mgDFE', 'mcgDFE']
+
+    return render_template('index.html', products=products, product_claims=product_claims, product_categories=product_categories, claim_main_options=claim_main_options,
+                           item_name_options=item_name_options, item_code_options=item_code_options,
+                           description_options=description_options, unit_size_options=unit_size_options,
+                           color_options=color_options, claim_unit_options=claim_unit_options, search_filters={})
 
 @app.route('/search', methods=['GET'])
 def search_products():
@@ -536,13 +555,12 @@ def search_products():
         "claim_description": request.args.getlist("claim_description[]"),
         "claim_concentration": request.args.getlist("claim_concentration[]"),
         "claim_concentration_tolerance": request.args.getlist("claim_concentration_tolerance[]", type=float),
-        "claim_unit": request.args.getlist("claim_unit[]"),  # 클레임 단위 추가
+        "claim_unit": request.args.getlist("claim_unit[]"),
         "product_type": request.args.get("product_type", None),
         "weight_tolerance": request.args.get("weight_tolerance", "10"),
-        "all_unit": request.args.get("all_unit", False, type=lambda v: v.lower() == 'true')  # All Unit 옵션 추가
+        "all_unit": request.args.get("all_unit", False, type=lambda v: v.lower() == 'true')
     }
 
-    # 검색 필터에서 None 값인 필터 제거
     filters = {k: v for k, v in filters.items() if v is not None and (isinstance(v, list) or str(v).strip() != "")}
 
     db = get_db()
@@ -569,109 +587,142 @@ def search_products():
         except ValueError:
             pass
 
-    # 나머지 필터들
+    # 일반 필터 추가
     for field, value in filters.items():
         if field not in ["weight", "claim_concentration", "claim_concentration_tolerance", "claim_main",
                          "claim_description", "claim_unit", "dosage", "product_type", "weight_tolerance", "all_unit"]:
-            if value != "" and value is not None:
-                base_query += f" AND p.{field} LIKE :{field}"
-                params[field] = f"%{value}%"
+            base_query += f" AND p.{field} LIKE :{field}"
+            params[field] = f"%{value}%"
 
-    # Dosage 필터
-    if "dosage" in filters:
-        base_query += f" AND p.dosage LIKE :dosage"
-        params["dosage"] = f"%{filters['dosage']}%"
-
-    # 제품 유형 필터 추가
-    if "product_type" in filters:
-        product_type = filters["product_type"]
-        if product_type == "Tablet":
-            base_query += " AND p.item_code LIKE :product_type"
-            params["product_type"] = "%-TB-%"
-        elif product_type == "Softgel":
-            base_query += " AND p.item_code LIKE :product_type"
-            params["product_type"] = "%-SG-%"
-        elif product_type == "HardCapsule":
-            base_query += " AND p.item_code LIKE :product_type"
-            params["product_type"] = "%-HC-%"
-        elif product_type == "Sachet":
-            base_query += " AND p.item_code LIKE :product_type"
-            params["product_type"] = "%-SH-%"
-        elif product_type == "Powder":
-            base_query += " AND p.item_code LIKE :product_type"
-            params["product_type"] = "%-PW-%"
-        elif product_type == "Liquid":
-            base_query += f" AND p.item_code LIKE :product_type"
-            params["product_type"] = "%-LQ-%"
-        elif product_type == "PH Tablet":
-            base_query += f" AND p.item_code LIKE :product_type"
-            params["product_type"] = "PH-TB%"
-        elif product_type == "PH Hard Capsule":
-            base_query += f" AND p.item_code LIKE :product_type"
-            params["product_type"] = "PH-HC%"
-        elif product_type == "PH Softgel":
-            base_query += f" AND p.item_code LIKE :product_type"
-            params["product_type"] = "PH-SG%"
-
-    # Claim 필터
+    # Claim 필터 개선 (단위 변환 포함)
     if "claim_main" in filters or "claim_description" in filters or "claim_concentration" in filters or "claim_unit" in filters:
         claim_conditions = []
         claim_mains = filters.get("claim_main", [])
         claim_descriptions = filters.get("claim_description", [])
         claim_concentrations = filters.get("claim_concentration", [])
         claim_concentration_tolerances = filters.get("claim_concentration_tolerance", [])
-        claim_units = filters.get("claim_unit", [])  # 클레임 단위 추가
-        all_unit = filters.get("all_unit")  # All Unit 옵션 가져오기
+        claim_units = filters.get("claim_unit", [])
+        all_unit = filters.get("all_unit")
+
+        # 단위 변환 맵 (1 mg = 1000 mcg, 1 mgRAE = 1000 mcgRAE)
+        unit_conversion_map = {
+            "mg": ("mcg", 1000),
+            "mcg": ("mg", 0.001),
+            "mgRAE": ("mcgRAE", 1000),
+            "mcgRAE": ("mgRAE", 0.001),
+            "mgDFE": ("mcgDFE", 1000),
+            "mcgDFE": ("mcg", 1.700),
+            "mgNE": ("mcgNE", 1000),
+            "mcgNE": ("mgNE", 0.001),
+
+           # ✅ 1 mcgDFE = 0.5882 mcg, 1 mcg = 1.7 mcgDFE
+            "mcg": ("mcgDFE", 1.7),
+            "mcgDFE": ("mcg", 0.5882),
+        }
 
         for i in range(max(len(claim_mains), len(claim_descriptions), len(claim_concentrations), len(claim_units))):
             condition = []
+
             if i < len(claim_mains) and claim_mains[i]:
-                condition.append(
-                    f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_main LIKE :claim_main_{i})")
+                condition.append(f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_main LIKE :claim_main_{i})")
                 params[f"claim_main_{i}"] = f"%{claim_mains[i]}%"
 
             if i < len(claim_descriptions) and claim_descriptions[i]:
-                condition.append(
-                    f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_description LIKE :claim_desc_{i})")
+                condition.append(f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_description LIKE :claim_desc_{i})")
                 params[f"claim_desc_{i}"] = f"%{claim_descriptions[i]}%"
 
             if i < len(claim_concentrations) and claim_concentrations[i]:
                 try:
                     concentration_value = float(claim_concentrations[i])
-                    # claim_concentration_tolerances 리스트에 값이 있는지 확인
-                    if claim_concentration_tolerances and i < len(
-                            claim_concentration_tolerances) and claim_concentration_tolerances[i] is not None:
-                        tolerance = float(claim_concentration_tolerances[i])
-                    else:
-                        tolerance = 10.0
+
+                    # 0 이하의 값 검색 방지
+                    if concentration_value <= 0:
+                        raise ValueError("검색값은 0보다 커야 합니다.")
+
+                    tolerance = float(claim_concentration_tolerances[i]) if i < len(claim_concentration_tolerances) and claim_concentration_tolerances[i] is not None else 10.0
 
                     min_concentration = concentration_value * (1 - tolerance / 100)
                     max_concentration = concentration_value * (1 + tolerance / 100)
 
-                    condition.append(
-                        f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_concentration BETWEEN :min_conc_{i} AND :max_conc_{i})")
-                    params[f"min_conc_{i}"] = min_concentration
-                    params[f"max_conc_{i}"] = max_concentration
-                except ValueError:
-                    pass
+                    unit_condition = []
 
-            # 클레임 단위 조건 추가 (All Unit이 선택되지 않았을 때만)
-            if not all_unit and i < len(claim_units) and claim_units[i]:
-                condition.append(
-                    f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_unit = :claim_unit_{i})")
-                params[f"claim_unit_{i}"] = claim_units[i]
+                    if all_unit:
+                        for original_unit, (converted_unit, factor) in unit_conversion_map.items():
+                            converted_value = concentration_value * factor
+                            converted_min = converted_value * (1 - tolerance / 100)
+                            converted_max = converted_value * (1 + tolerance / 100)
+
+                            # ✅ 변환된 값이 원래 검색 범위에 포함되는지 확인
+                            if not (min_concentration <= converted_value <= max_concentration):
+                                converted_min, converted_max = min_concentration * factor, max_concentration * factor
+
+                            unit_condition.append(f"""
+                                (c{i}.claim_concentration BETWEEN :min_conc_{i}_{original_unit} AND :max_conc_{i}_{original_unit} AND c{i}.claim_unit = :claim_unit_{i}_{original_unit})
+                                OR 
+                                (c{i}.claim_concentration BETWEEN :min_conc_{i}_{converted_unit} AND :max_conc_{i}_{converted_unit} AND c{i}.claim_unit = :claim_unit_{i}_{converted_unit})
+                            """)
+
+                            params[f"min_conc_{i}_{original_unit}"] = min_concentration
+                            params[f"max_conc_{i}_{original_unit}"] = max_concentration
+                            params[f"claim_unit_{i}_{original_unit}"] = original_unit
+                            params[f"min_conc_{i}_{converted_unit}"] = converted_min
+                            params[f"max_conc_{i}_{converted_unit}"] = converted_max
+                            params[f"claim_unit_{i}_{converted_unit}"] = converted_unit
+
+                    elif i < len(claim_units):
+                        original_unit = claim_units[i]
+
+                        if original_unit in unit_conversion_map:
+                            converted_unit, factor = unit_conversion_map[original_unit]
+                            if original_unit in unit_conversion_map:
+                                converted_unit, factor = unit_conversion_map[original_unit]
+
+                            converted_value = concentration_value * factor
+                            converted_min = converted_value * (1 - tolerance / 100)
+                            converted_max = converted_value * (1 + tolerance / 100)
+
+                            # ✅ 변환된 값이 원래 검색 범위에 포함되는지 확인
+                            if not (min_concentration <= converted_value <= max_concentration):
+                                converted_min, converted_max = min_concentration * factor, max_concentration * factor
+
+                            unit_condition.append(f"""
+                                (c{i}.claim_concentration BETWEEN :min_conc_{i} AND :max_conc_{i} AND c{i}.claim_unit = :claim_unit_{i})
+                                OR 
+                                (c{i}.claim_concentration BETWEEN :min_conc_converted_{i} AND :max_conc_converted_{i} AND c{i}.claim_unit = :claim_unit_converted_{i})
+                            """)
+
+                            params[f"min_conc_{i}"] = min_concentration
+                            params[f"max_conc_{i}"] = max_concentration
+                            params[f"claim_unit_{i}"] = original_unit
+                            params[f"min_conc_converted_{i}"] = converted_min
+                            params[f"max_conc_converted_{i}"] = converted_max
+                            params[f"claim_unit_converted_{i}"] = converted_unit
+                        else:
+                            unit_condition.append(f"""
+                                c{i}.claim_concentration BETWEEN :min_conc_{i} AND :max_conc_{i}
+                                AND c{i}.claim_unit = :claim_unit_{i}
+                            """)
+                            params[f"min_conc_{i}"] = min_concentration
+                            params[f"max_conc_{i}"] = max_concentration
+                            params[f"claim_unit_{i}"] = original_unit
+
+                    if unit_condition:
+                        condition.append(f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND ({' OR '.join(unit_condition)}))")
+
+                except ValueError:
+                    condition.append(f"EXISTS (SELECT 1 FROM claims c{i} WHERE c{i}.product_id = p.id AND c{i}.claim_concentration LIKE :claim_conc_{i})")
+                    params[f"claim_conc_{i}"] = f"%{claim_concentrations[i]}%"
 
             if condition:
                 claim_conditions.append(" AND ".join(condition))
 
         if claim_conditions:
-            base_query += " AND (" + " AND ".join(claim_conditions) + ")"
+            base_query += " AND (" + " OR ".join(claim_conditions) + ")"
 
     query = base_query + " ORDER BY p.item_code ASC"
 
-    print("쿼리:", query)  # 쿼리 출력
-    print("파라미터:", params)  # 파라미터 출력
-
+    print("쿼리:", query)
+    print("파라미터:", params)
     cursor.execute(query, params)
     products = cursor.fetchall()
 
@@ -705,7 +756,7 @@ def search_products():
     color_options = [row[0] for row in cursor.execute('SELECT DISTINCT color FROM products ORDER BY color ASC').fetchall()]
 
     # 단위 옵션 추가
-    claim_unit_options = ['mg', 'IU', 'mga-TE', 'mgRAE', 'mgNE', 'mgDFE']
+    claim_unit_options = ['mg', 'mcg', 'IU', 'mga-TE', 'mgRAE', 'mcgRAE', 'mgNE', 'mcgNE', 'mgDFE', 'mcgDFE']
 
     return render_template('index.html', products=products, product_claims=product_claims,
                            product_categories=product_categories, search_filters=filters,
