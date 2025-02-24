@@ -849,6 +849,7 @@
                     {% endif %}
                 </div>
                 <div class="add-claim-search-container">
+                    <button type="button" class="green-button" onclick="addClaimSearch()">Add Claim Search</button>
                     <button type="button" class="addclaim-button" onclick="openVitaminsMineralsModal()">Add Vitamins & Minerals</button>
                 </div>
             </div>
@@ -1100,9 +1101,9 @@
         `;
 
             // 새로운 클레임 검색 행 추가
-            window.addClaimSearch = function(count = 1) {
+            window.addClaimSearch = function(count = 5) {
                 const container = document.getElementById('claim-search-container');
-                // Add claim rows at once
+                // Add 5 claim rows at once
                 for (let i = 0; i < count; i++) {
                     const newClaimRow = document.createElement('div');
                     newClaimRow.innerHTML = window.claimSearchRowTemplate;
@@ -1202,7 +1203,10 @@
                     addClaimSearch(1); // 하나의 행씩 추가
                     // Get the last claim row and set the values
                     var newClaimRow = $('.claim-search-row').last();
-                    newClaimRow.find('.claim-main-input').val(item);
+                    var mainClaimInput = newClaimRow.find('.claim-main-input');
+                    var claimDescriptionInput = newClaimRow.find('.claim-description-input');
+                    mainClaimInput.val(item); // 메인 클레임 입력
+                    initClaimDescriptionAutocomplete(claimDescriptionInput, item); // **필터링 적용**
                 });
 
                 closeVitaminsMineralsModal(); // Close the modal

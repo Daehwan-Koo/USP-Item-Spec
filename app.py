@@ -222,29 +222,42 @@ def categorize_item_code(item_code):
 def autocomplete():
     query = request.args.get("query", "").strip()
     field = request.args.get("field", "claim_main")
+    main_claim = request.args.get("main_claim", "").strip()  # 필터 기준
 
-    print(f"🔍 Autocomplete 요청: query={query}, field={field}")  # 요청 확인
+    print(f"🔍 Autocomplete 요청: query={query}, field={field}, main_claim={main_claim}")  # 요청 확인
 
     db = get_db()
     cursor = db.cursor()
+
     try:
         if field == 'claim_main':
             cursor.execute('''
-            SELECT DISTINCT claim_main
-            FROM claims
-            WHERE claim_main LIKE ?
-            ORDER BY claim_main ASC
-            LIMIT 10
+                SELECT DISTINCT claim_main
+                FROM claims
+                WHERE claim_main LIKE ?
+                ORDER BY claim_main ASC
+                LIMIT 10
             ''', ('%' + query + '%',))
+
         elif field == 'claim_description':
-            cursor.execute('''
-            SELECT DISTINCT claim_description
-            FROM claims
-            WHERE claim_description LIKE ?
-            ORDER BY claim_description ASC
-            LIMIT 10
-            ''', ('%' + query + '%',))
-        elif field in ['unit_size', 'color']:
+            if main_claim:
+                cursor.execute('''
+                    SELECT DISTINCT claim_description
+                    FROM claims
+                    WHERE claim_main = ? AND claim_description LIKE ?
+                    ORDER BY claim_description ASC
+                    LIMIT 10
+                ''', (main_claim, '%' + query + '%',))
+            else:
+                cursor.execute('''
+                    SELECT DISTINCT claim_description
+                    FROM claims
+                    WHERE claim_description LIKE ?
+                    ORDER BY claim_description ASC
+                    LIMIT 10
+                ''', ('%' + query + '%',))
+
+        elif field in ['item_code', 'item_name', 'description', 'unit_size', 'color']:
             cursor.execute(f'''
                 SELECT DISTINCT {field}
                 FROM products
@@ -524,6 +537,7 @@ def index():
 
     # 자동 완성을 위한 데이터베이스 쿼리 추가
     item_code_options = [row[0] for row in cursor.execute('SELECT DISTINCT item_code FROM products ORDER BY item_code ASC').fetchall()]
+    item_name_options = [row[0] for row in cursor.execute('SELECT DISTINCT item_name FROM products ORDER BY item_name ASC').fetchall()]
     description_options = [row[0] for row in cursor.execute('SELECT DISTINCT description FROM products ORDER BY description ASC').fetchall()]
     unit_size_options = [row[0] for row in cursor.execute('SELECT DISTINCT unit_size FROM products ORDER BY unit_size ASC').fetchall()]
     color_options = [row[0] for row in cursor.execute('SELECT DISTINCT color FROM products ORDER BY color ASC').fetchall()]
