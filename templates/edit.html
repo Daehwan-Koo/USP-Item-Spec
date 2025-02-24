@@ -560,7 +560,7 @@
                                     <option value="mcgRAE">mcgRAE</option>
                                     <option value="mgNE">mgNE</option>
                                     <option value="mcgNE">mcgNE</option>
-                                    <option value="mgDFE>mgDFE</option>
+                                    <option value="mgDFE">mgDFE</option>
                                     <option value="mcgDFE">mcgDFE</option>
                                 </select>
                             </div>
@@ -604,6 +604,9 @@
                 var rightColumn = document.createElement('div');
                 rightColumn.className = 'mineral-column';
 
+                // 선택된 순서를 저장할 배열 초기화
+                window.selectedVitaminsMineralsOrder = [];
+
                 vitamins.forEach(function(item) {
                     createCheckbox(item, leftColumn);
                 });
@@ -620,7 +623,27 @@
 
             function createCheckbox(item, container) {
                 var label = document.createElement('label');
-                label.innerHTML = `<input type="checkbox" name="vitamins_minerals" value="${item}"> ${item}`;
+                var checkbox = document.createElement('input');
+                checkbox.type = "checkbox";
+                checkbox.name = "vitamins_minerals";
+                checkbox.value = item;
+
+                // 체크박스 클릭 이벤트 리스너 추가
+                checkbox.addEventListener('click', function() {
+                    if (this.checked) {
+                        // 체크되었을 때 순서대로 배열에 추가
+                        window.selectedVitaminsMineralsOrder.push(this.value);
+                    } else {
+                        // 체크 해제되었을 때 배열에서 제거
+                        var index = window.selectedVitaminsMineralsOrder.indexOf(this.value);
+                        if (index > -1) {
+                            window.selectedVitaminsMineralsOrder.splice(index, 1);
+                        }
+                    }
+                });
+
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(' ' + item));
                 container.appendChild(label);
             }
 
@@ -631,20 +654,17 @@
 
             // Add Selected Vitamins and Minerals
             window.addSelectedVitaminsMinerals = function() {
-                var selectedVitaminsMinerals = [];
-                var checkboxes = document.querySelectorAll('#vitaminsMineralsModal input[name="vitamins_minerals"]:checked');
-
-                checkboxes.forEach(function(checkbox) {
-                    selectedVitaminsMinerals.push(checkbox.value);
-                });
-
-                selectedVitaminsMinerals.forEach(function(item) {
+                // 저장된 순서대로 클레임 추가
+                window.selectedVitaminsMineralsOrder.forEach(function(item) {
                     addClaim(); // Add a new claim for each selected item
                     var newClaim = $('#claims .claim:last'); // Get the last claim added
                     newClaim.find('.claim-main-input').val(item); // Set the main claim value
                 });
 
                 closeVitaminsMineralsModal(); // Close the modal
+
+                // 배열 비우기 (다음 사용을 위해)
+                window.selectedVitaminsMineralsOrder = [];
             };
 
             // Close the modal if the user clicks outside of it

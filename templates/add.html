@@ -256,7 +256,6 @@
                 width: 48%;
         }
 
-
         .vitamins-minerals-list label {
             font-weight: normal;
             display: block;
@@ -311,41 +310,42 @@
     {% endif %}
     {% endwith %}
 
-    {% set role = session["role"]|default("viewer") %} <form method="post">
+    {% set role = session["role"]|default("viewer") %}
+    <form method="post">
         <div class="form-group">
             <label for="item_code">Item Code:</label>
             <input type="text" id="item_code" name="item_code" required {% if role not in ['master', 'admin'] %}
-                readonly class="readonly"{% endif %}>
+                readonly class="readonly" {% endif %}>
         </div>
         <div class="form-group">
             <label for="item_name">Item Name:</label>
             <input type="text" id="item_name" name="item_name" {% if role not in ['master', 'admin'] %} readonly
-                class="readonly"{% endif %}>
+                class="readonly" {% endif %}>
         </div>
         <div class="form-group">
             <label for="description">Description:</label>
             <input type="text" id="description" name="description" {% if role not in ['master', 'admin'] %} readonly
-                class="readonly"{% endif %}>
+                class="readonly" {% endif %}>
         </div>
         <div class="form-group">
             <label for="unit_size">Unit Size:</label>
-            <input type="text" id="unit_size" name="unit_size" class="autocomplete-input" {% if role not in ['master', 'admin'] %}
-                readonly class="readonly"{% endif %}>
+            <input type="text" id="unit_size" name="unit_size" class="autocomplete-input" {% if role not in ['master',
+            'admin'] %} readonly class="readonly" {% endif %}>
         </div>
         <div class="form-group">
             <label for="color">Color:</label>
-            <input type="text" id="color" name="color" class="autocomplete-input" {% if role not in ['master', 'admin'] %}
-                readonly class="readonly"{% endif %}>
+            <input type="text" id="color" name="color" class="autocomplete-input" {% if role not in ['master', 'admin']
+            %} readonly class="readonly" {% endif %}>
         </div>
         <div class="form-group">
             <label for="weight">Weight (mg):</label>
             <input type="number" id="weight" name="weight" step="any" {% if role not in ['master', 'admin'] %}
-                readonly class="readonly"{% endif %}>
+                readonly class="readonly" {% endif %}>
         </div>
         <div class="form-group">
             <label for="remark">Remark:</label>
             <textarea id="remark" name="remark" rows="4" {% if role not in ['master', 'admin'] %} readonly
-                class="readonly"{% endif %}></textarea>
+                class="readonly" {% endif %}></textarea>
         </div>
         <div class="claims-container">
             <h3>Claims</h3>
@@ -355,22 +355,22 @@
                         <div class="form-group">
                             <label>Main Claim:</label>
                             <input type="text" name="claim_main[]" class="claim-main-input" {% if role not in ['master',
-                            'admin'] %} readonly class="readonly"{% endif %}>
+                            'admin'] %} readonly class="readonly" {% endif %}>
                         </div>
                         <div class="form-group">
                             <label>Claim Description:</label>
                             <input type="text" name="claim_description[]" class="claim-description-input" {% if role not
-                            in ['master', 'admin'] %} readonly class="readonly"{% endif %}>
+                            in ['master', 'admin'] %} readonly class="readonly" {% endif %}>
                         </div>
                         <div class="form-group">
                             <label>Claim Concentration:</label>
                             <input type="number" name="claim_concentration[]" step="any" {% if role not in ['master',
-                            'admin'] %} readonly class="readonly"{% endif %}>
+                            'admin'] %} readonly class="readonly" {% endif %}>
                         </div>
                         <div class="form-group">
                             <label>Unit:</label>
                             <select name="claim_unit[]" {% if role not in ['master', 'admin'] %} disabled
-                                class="readonly"{% endif %}>
+                                class="readonly" {% endif %}>
                                 <option value="mg" selected>mg</option>
                                 <option value="mcg">mcg</option>
                                 <option value="IU">IU</option>
@@ -386,7 +386,7 @@
                         <div class="form-group">
                             <label>Test Result:</label>
                             <select name="test_result[]" {% if role not in ['master', 'admin'] %} disabled
-                                class="readonly"{% endif %}>
+                                class="readonly" {% endif %}>
                                 <option value="Test O">Test O</option>
                                 <option value="Test X">Test X</option>
                                 <option value="Input">Input</option>
@@ -403,7 +403,9 @@
             <button type="button" class="add-vitamins-minerals">Add Vitamins &
                 Minerals</button>
             {% endif %}
-        </div> <!-- Vitamins & Minerals Modal -->
+        </div>
+
+        <!-- Vitamins & Minerals Modal -->
         <div class="vitamins-minerals-modal" id="vitaminsMineralsModal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -596,6 +598,9 @@
                 var rightColumn = document.createElement('div');
                 rightColumn.className = 'mineral-column';
 
+                // 선택된 순서를 저장할 배열 초기화
+                window.selectedVitaminsMineralsOrder = [];
+
                 vitamins.forEach(function(item) {
                     createCheckbox(item, leftColumn);
                 });
@@ -612,7 +617,27 @@
 
             function createCheckbox(item, container) {
                 var label = document.createElement('label');
-                label.innerHTML = `<input type="checkbox" name="vitamins_minerals" value="${item}"> ${item}`;
+                var checkbox = document.createElement('input');
+                checkbox.type = "checkbox";
+                checkbox.name = "vitamins_minerals";
+                checkbox.value = item;
+
+                // 체크박스 클릭 이벤트 리스너 추가
+                checkbox.addEventListener('click', function() {
+                    if (this.checked) {
+                        // 체크되었을 때 순서대로 배열에 추가
+                        window.selectedVitaminsMineralsOrder.push(this.value);
+                    } else {
+                        // 체크 해제되었을 때 배열에서 제거
+                        var index = window.selectedVitaminsMineralsOrder.indexOf(this.value);
+                        if (index > -1) {
+                            window.selectedVitaminsMineralsOrder.splice(index, 1);
+                        }
+                    }
+                });
+
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(' ' + item));
                 container.appendChild(label);
             }
 
@@ -620,15 +645,9 @@
                 document.getElementById('vitaminsMineralsModal').style.display = "none";
             };
 
-
             window.addSelectedVitaminsMinerals = function() {
-                var selectedVitaminsMinerals = [];
-                var checkboxes = document.querySelectorAll('input[name="vitamins_minerals"]:checked');
-                checkboxes.forEach(function(checkbox) {
-                    selectedVitaminsMinerals.push(checkbox.value);
-                });
-
-                selectedVitaminsMinerals.forEach(function(item) {
+                // 저장된 순서대로 클레임 추가
+                window.selectedVitaminsMineralsOrder.forEach(function(item) {
                     var claimsContainer = document.getElementById('claims');
                     var newClaim = document.createElement('div');
                     newClaim.className = 'claim';
@@ -677,6 +696,9 @@
                 });
 
                 closeVitaminsMineralsModal();
+
+                // 배열 비우기 (다음 사용을 위해)
+                window.selectedVitaminsMineralsOrder = [];
             };
 
             // Close the modal if the user clicks outside of it
