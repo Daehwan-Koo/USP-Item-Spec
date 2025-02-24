@@ -222,7 +222,9 @@ def categorize_item_code(item_code):
 def autocomplete():
     query = request.args.get("query", "").strip()
     field = request.args.get("field", "claim_main")
-    main_claim = request.args.get("main_claim", "")
+
+    print(f"🔍 Autocomplete 요청: query={query}, field={field}")  # 요청 확인
+
     db = get_db()
     cursor = db.cursor()
     try:
@@ -235,22 +237,13 @@ def autocomplete():
             LIMIT 10
             ''', ('%' + query + '%',))
         elif field == 'claim_description':
-            if main_claim:
-                cursor.execute('''
-                SELECT DISTINCT claim_description
-                FROM claims
-                WHERE claim_main = ? AND claim_description LIKE ?
-                ORDER BY claim_description ASC
-                LIMIT 10
-                ''', (main_claim, '%' + query + '%'))
-            else:
-                cursor.execute('''
-                SELECT DISTINCT claim_description
-                FROM claims
-                WHERE claim_description LIKE ?
-                ORDER BY claim_description ASC
-                LIMIT 10
-                ''', ('%' + query + '%',))
+            cursor.execute('''
+            SELECT DISTINCT claim_description
+            FROM claims
+            WHERE claim_description LIKE ?
+            ORDER BY claim_description ASC
+            LIMIT 10
+            ''', ('%' + query + '%',))
         elif field in ['unit_size', 'color']:
             cursor.execute(f'''
                 SELECT DISTINCT {field}
@@ -263,10 +256,13 @@ def autocomplete():
             return jsonify([])
 
         suggestions = [row[0] for row in cursor.fetchall()]
+        print(f"✅ DB 조회 결과: {suggestions}")  # 응답 확인
         return jsonify(suggestions)
+
     except Exception as e:
-        print(f"Autocomplete error: {e}")
+        print(f"❌ Autocomplete 오류: {e}")  # 오류 확인
         return jsonify([])
+
     finally:
         cursor.close()
 
@@ -617,7 +613,16 @@ def search_products():
 
            # ✅ 1 mcgDFE = 0.5882 mcg, 1 mcg = 1.7 mcgDFE
             "mcg": ("mcgDFE", 1.7),
+            "mg": ("mcgDFE", 1700),
             "mcgDFE": ("mcg", 0.5882),
+            "mcgDFE": ("mg", 0.0005882),
+
+           # ✅ 1 mgNE = 1 mg
+            "mcg": ("mcgNE", 1),
+            "mg": ("mcgNE", 1),
+            "mcgNE": ("mcg", 1),
+            "mcgNE": ("mg", 1),
+
         }
 
         for i in range(max(len(claim_mains), len(claim_descriptions), len(claim_concentrations), len(claim_units))):

@@ -241,6 +241,15 @@
             padding: 10px;
         }
 
+        .vitamins-minerals-list {
+                display: flex;
+                justify-content: space-between;
+        }
+
+        .vitamin-column, .mineral-column {
+                width: 48%;
+        }
+
         .vitamins-minerals-list label {
             font-weight: normal;
             display: block;
@@ -581,20 +590,39 @@
                 var list = modal.querySelector('.vitamins-minerals-list');
                 list.innerHTML = ''; // Clear previous list
 
-                var vitaminsAndMinerals = [
+                var vitamins = [
                     'Vit A', 'Beta-Carotene', 'Vit D3', 'Vit E', 'Vit K1', 'Vit K2', 'Vit B1', 'Vit B2', 'Vit B3',
-                    'Vit B5', 'Vit B6', 'Vit B12', 'Vit C', 'Vit B9', 'Biotin', 'Calcium', 'Magnesium', 'Iron',
-                    'Zinc', 'Copper', 'Selenium', 'Iodine', 'Manganese', 'Molybdenum', 'Potassium', 'Chromium'
+                    'Vit B5', 'Vit B6', 'Vit B12', 'Vit C', 'Vit B9', 'Biotin'
+                ];
+                var minerals = [
+                    'Calcium', 'Magnesium', 'Iron', 'Zinc', 'Copper', 'Selenium', 'Iodine', 'Manganese',
+                    'Molybdenum', 'Potassium', 'Chromium'
                 ];
 
-                vitaminsAndMinerals.forEach(function(item) {
-                    var label = document.createElement('label');
-                    label.innerHTML = `<input type="checkbox" name="vitamins_minerals" value="${item}"> ${item}`;
-                    list.appendChild(label);
+                var leftColumn = document.createElement('div');
+                leftColumn.className = 'vitamin-column';
+                var rightColumn = document.createElement('div');
+                rightColumn.className = 'mineral-column';
+
+                vitamins.forEach(function(item) {
+                    createCheckbox(item, leftColumn);
                 });
+
+                minerals.forEach(function(item) {
+                    createCheckbox(item, rightColumn);
+                });
+
+                list.appendChild(leftColumn);
+                list.appendChild(rightColumn);
 
                 modal.style.display = "block";
             };
+
+            function createCheckbox(item, container) {
+                var label = document.createElement('label');
+                label.innerHTML = `<input type="checkbox" name="vitamins_minerals" value="${item}"> ${item}`;
+                container.appendChild(label);
+            }
 
             window.closeVitaminsMineralsModal = function() {
                 var modal = document.getElementById('vitaminsMineralsModal');
