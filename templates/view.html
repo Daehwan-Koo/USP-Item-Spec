@@ -44,14 +44,14 @@
         .btn {
             display: inline-block;
             padding: 5px 10px; /* Match index button padding */
-            background-color: #5cb85c; /* Green button, same as index */
+            background-color: #003366; 
             color: white;
             text-decoration: none;
             border-radius: 4px; /* Match index button border-radius */
             font-size: 14px; /* Match index button font-size */
         }
         .btn:hover {
-            background-color: #4cae4c; /* Darker green on hover, same as index */
+            background-color: #1976D2; 
         }
         .basic-info th {
             text-align: center;
@@ -168,7 +168,8 @@
             </tbody>
         </table>
 
-        <a href="{{ url_for('index') }}" class="btn">Back to List</a>
+        <a href="#" class="btn" onclick="history.back(); return false;">Back to List</a>
+
     </div>
 </body>
 </html>
