@@ -886,9 +886,8 @@ def download_db():
     """claims.db 파일을 다운로드"""
     return send_file(DB_FILE_PATH, as_attachment=True, download_name='claims.db')
 
-@app.route('/compare', methods=['POST'])
+@app.route('/compare', methods=['GET', 'POST'])
 def compare_products():
-    selected_products = request.form.getlist('item_code[]')
     db = get_db()
     cursor = db.cursor()
     products = []
@@ -898,27 +897,182 @@ def compare_products():
     if 'filter_url' not in session or request.referrer and 'compare' not in request.referrer:
         session['filter_url'] = request.referrer  # 검색 필터 적용된 목록 저장
 
-    for item_code in selected_products:
+    if request.method == 'POST':
+        selected_products = request.form.getlist('item_code[]')
+        session['compared_products'] = selected_products
+    elif 'compared_products' not in session:
+        session['compared_products'] = []
+
+    for item_code in session['compared_products']:
         cursor.execute('''
-        SELECT item_code, item_name, description, unit_size, color, weight, dosage, remark
-        FROM products
-        WHERE item_code = ?
+            SELECT item_code, item_name, description, unit_size, color, weight, dosage, remark
+            FROM products
+            WHERE item_code = ?
         ''', (item_code,))
         product = cursor.fetchone()
+
         if product:
             products.append(product)
+            cursor.execute('''
+                SELECT claim_main, claim_description, claim_concentration, claim_unit, test_result
+                FROM claims
+                WHERE product_id IN (SELECT id FROM products WHERE item_code = ?)
+            ''', (item_code,))
+            product_claims = cursor.fetchall()
+            claims[item_code] = product_claims
+        else:
+            flash(f"Item code {item_code} not found.", "danger")
 
-        cursor.execute('''
-        SELECT claim_main, claim_description, claim_concentration, claim_unit, test_result
-        FROM claims
-        JOIN products ON claims.product_id = products.id
-        WHERE products.item_code = ?
-        ''', (item_code,))
-        product_claims = cursor.fetchall()
-        claims[item_code] = product_claims
+    # 클레임 주요 항목 설정
+    cursor.execute("SELECT DISTINCT claim_main FROM claims")
+    claim_main_options = [row[0] for row in cursor.fetchall()]
+    claim_main_options.sort()
 
     # 🔹 Compare 페이지 렌더링 (즉시 리디렉션 X)
-    return render_template('compare.html', products=products, claims=claims, filter_url=session.get('filter_url', url_for('index')))
+    return render_template('compare.html', products=products, claims=claims,
+                           claim_main_options=claim_main_options,
+                           filter_url=session.get('filter_url', url_for('index')))
+
+@app.route('/get_item_codes')
+def get_item_codes():
+    term = request.args.get('term', '')
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT item_code FROM products WHERE item_code LIKE ?", (f'%{term}%',))
+    item_codes = [row[0] for row in cursor.fetchall()]
+    return jsonify(item_codes)
+
+@app.route('/add_product_to_compare', methods=['POST'])
+def add_product_to_compare():
+    item_code = request.form.get('item_code')
+
+    if not item_code:
+        return jsonify({"success": False, "message": "No item code provided."})
+
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute("SELECT * FROM products WHERE item_code = ?", (item_code,))
+    product = cursor.fetchone()
+
+    if not product:
+        return jsonify({"success": False, "message": "Product not found."})
+
+    if 'compared_products' not in session:
+        session['compared_products'] = []
+
+    compared_set = set(session['compared_products'])
+
+    if item_code in compared_set:
+        return jsonify({"success": False, "message": "Product already exists."})
+
+    compared_set.add(item_code)
+    session['compared_products'] = list(compared_set)
+    session.modified = True  # 세션 변경 감지
+
+    return jsonify({"success": True, "message": "Product added successfully."})
+
+@app.route('/get_product_details', methods=['GET'])
+def get_product_details():
+    item_code = request.args.get('item_code')
+    db = get_db()
+    cursor = db.cursor()
+    
+    # 제품 기본 정보 조회
+    cursor.execute("""
+        SELECT item_code, item_name, unit_size, color, weight, dosage, remark 
+        FROM products WHERE item_code = ?
+    """, (item_code,))
+    
+    product = cursor.fetchone()
+    if not product:
+        return jsonify({"success": False, "message": "Product not found"})
+    
+    # 클레임 정보 조회
+    cursor.execute("""
+        SELECT claim_main, claim_description, claim_concentration, claim_unit, test_result
+        FROM claims
+        WHERE product_id = (SELECT id FROM products WHERE item_code = ?)
+    """, (item_code,))
+    
+    claims = [
+        {
+            "claim_main": row[0],
+            "claim_description": row[1],
+            "claim_concentration": row[2],
+            "claim_unit": row[3],
+            "test_result": row[4],
+        }
+        for row in cursor.fetchall()
+    ]
+
+    return jsonify({
+        "success": True,
+        "item_code": product[0],
+        "name": product[1],
+        "unit_size": product[2],
+        "color": product[3],
+        "weight": product[4],
+        "dosage": product[5],
+        "remark": product[6],
+        "claims": claims,  # 클레임 정보를 포함
+    })
+
+@app.route('/get_compared_products', methods=['GET'])
+def get_compared_products():
+    compared_products = session.get('compared_products', [])
+    db = get_db()
+    cursor = db.cursor()
+
+    product_list = []
+    for item_code in compared_products:
+        # ✅ 기본 정보 가져오기
+        cursor.execute("""
+            SELECT item_code, item_name, unit_size, color, weight, dosage, remark
+            FROM products WHERE item_code = ?
+        """, (item_code,))
+        product = cursor.fetchone()
+
+        if product:
+            # ✅ 클레임 정보 가져오기
+            cursor.execute("""
+                SELECT claim_main, claim_description, claim_concentration, claim_unit, test_result
+                FROM claims WHERE product_id = (SELECT id FROM products WHERE item_code = ?)
+            """, (item_code,))
+            claims = [
+                {
+                    "claim_main": row[0],
+                    "claim_description": row[1],
+                    "claim_concentration": row[2],
+                    "claim_unit": row[3],
+                    "test_result": row[4],
+                }
+                for row in cursor.fetchall()
+            ]
+
+            # ✅ 클레임 정보를 포함하여 반환
+            product_list.append({
+                "item_code": product[0],
+                "name": product[1],
+                "unit_size": product[2],
+                "color": product[3],
+                "weight": product[4],
+                "dosage": product[5],
+                "remark": product[6],
+                "claims": claims  # ✅ 클레임 정보 포함
+            })
+
+    return jsonify({"success": True, "products": product_list})
+
+@app.route('/remove_from_compare/<item_code>')
+def remove_from_compare(item_code):
+    if 'compared_products' in session:
+        compared = session['compared_products']
+        if item_code in compared:
+            compared.remove(item_code)
+            session['compared_products'] = compared
+            session.modified = True
+    return jsonify({"success": True})
 
 
 @app.route('/view/<item_code>')
