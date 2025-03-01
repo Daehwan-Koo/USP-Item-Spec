@@ -1,1252 +1,1431 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product List</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-    <style>
-        /* 기존 스타일 유지 */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f0f8ff;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-            margin-top: 20px;
-            font-size: 12px;
-        }
-
-        th,
-        td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-            overflow: visible;
-            /* 툴팁이 잘리지 않도록 설정 */
-            word-break: break-word;
-        }
-
-        th {
-            background-color: #003366;
-            /* Dark blue header */
-            color: white;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-
-        .claim-tooltip .tooltiptext {
-            visibility: hidden;
-            width: 800px;
-            /* 더 넓은 공간을 제공 */
-            background-color: #333;
-            color: #fff;
-            text-align: center;
-            /* 텍스트 가운데 정렬 */
-            border-radius: 6px;
-            padding: 10px;
-            position: absolute;
-            z-index: 1000;
-            right: 100%;
-            top: 50%;
-            transform: translateY(-50%);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .remark-tooltip .tooltiptext {
-            visibility: hidden;
-            width: 600px;
-            background-color: #333;
-            color: #fff;
-            text-align: center;
-            border-radius: 6px;
-            padding: 15px;
-            position: absolute;
-            z-index: 1000;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .tooltip .tooltiptext::after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 100%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #333 transparent transparent transparent;
-        }
-
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        .message {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 5px;
-        }
-
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .search-form {
-            display: flex;
-            align-items: flex-start;
-        }
-
-        .search-fields {
-            flex: 1;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 5px;
-        }
-
-        .search-fields input,
-        .search-fields select {
-            flex: 1;
-            min-width: 150px;
-            padding: 5px;
-        }
-
-        .claim-search-row {
-            width: 100%;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 5px;
-        }
-
-        .search-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            margin-left: 10px;
-        }
-
-        .search-buttons button,
-        .search-buttons a {
-            width: 100px;
-            height: 30px;
-            line-height: 30px;
-            text-align: center;
-            background-color: #013f7d;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .search-buttons button:hover,
-        .search-buttons a:hover {
-            background-color: #011b36;
-        }
-
-        .compare-button {
-            width: 100px;
-            height: 30px;
-            line-height: 30px;
-            text-align: center;
-            background-color: #013f7d;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .compare-button:hover {
-            background-color: #011b36;
-        }
-
-        .remove-claim-search {
-            background-color: #f44336;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 12px;
-            margin: 2px 2px;
-            cursor: pointer;
-        }
-
-        .remove-claim-search:hover {
-            background-color: #c71a0e;
-        }
-
-        /* 툴팁 내용 테이블 스타일 */
-        .tooltip .tooltiptext table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            color: white;
-            table-layout: fixed;
-        }
-
-        .tooltip .tooltiptext table th,
-        .tooltip .tooltiptext table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            color: white;
-            word-break: break-word;
-        }
-
-        .tooltip .tooltiptext table th {
-            background-color: #555;
-            color: white;
-        }
-
-        .tooltip .tooltiptext table tr {
-            background-color: #333;
-        }
-
-        /* 컬럼 너비 조정 */
-        .tooltip .tooltiptext table th:nth-child(1),
-        /* Main 컬럼 */
-        .tooltip .tooltiptext table td:nth-child(1) {
-            width: 25%;
-            text-align: center;
-        }
-
-        .tooltip .tooltiptext table th:nth-child(2),
-        /* Description 컬럼 */
-        .tooltip .tooltiptext table td:nth-child(2) {
-            width: 33%;
-            text-align: center;
-        }
-
-        .tooltip .tooltiptext table th:nth-child(3),
-        /* Conc. 컬럼 */
-        .tooltip .tooltiptext table td:nth-child(3) {
-            width: 20%;
-            text-align: center;
-        }
-
-        .tooltip .tooltiptext table th:nth-child(4),
-        /* Unit 컬럼 */
-        .tooltip .tooltiptext table td:nth-child(4) {
-            width: 10%;
-            text-align: center;
-        }
-
-        .tooltip .tooltiptext table th:nth-child(5),
-        /* Test 컬럼 */
-        .tooltip .tooltiptext table td:nth-child(5) {
-            width: 12%;
-            text-align: center;
-        }
-
-        .product-type {
-            font-weight: bold;
-        }
-
-        .edit-button,
-        .delete-button,
-        .view-button {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 4px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            text-decoration: none;
-            color: white;
-            display: inline-block;
-            margin: 0 2px;
-        }
-
-        .addclaim-button {
-            background-color: #003366;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-left: 10px;
-        }
-
-        .green-button {
-            background-color: #003366;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-left: 10px;
-        }
-
-        .green-button:hover {
-            background-color: #1976D2;
-        }
-
-        .addclaim-button:hover {
-            background-color: #1976D2;
-        }
-
-        .add_product-button {
-            background-color: #003366;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-left: 10px;
-        }
-
-        .addclaim-button:hover {
-            background-color: #1976D2;
-        }
-
-        .edit-button {
-            background-color: #4CAF50;
-        }
-
-        .edit-button:hover {
-            background-color: #45a049;
-        }
-
-        .delete-button {
-            background-color: #f44336;
-        }
-
-        .delete-button:hover {
-            background-color: #d32f2f;
-        }
-
-        .view-button {
-            background-color: #2196F3;
-        }
-
-        .view-button:hover {
-            background-color: #1976D2;
-        }
-
-        .claim-tooltip,
-        .remark-tooltip {
-            font-size: 20px;
-        }
-
-        .tooltip .tooltiptext {
-            text-align: left;
-            max-width: 700px;
-            word-wrap: break-word;
-        }
-
-        .info-icons {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .info-icons .tooltip {
-            margin-right: 5px;
-        }
-
-        /* 아이콘 색상 */
-        .star-icon {
-            color: gold;
-        }
-
-        .exclamation-icon {
-            color: red;
-        }
-
-        /* 컬럼 너비 조정 */
-        th:nth-child(1),
-        /* Product Type */
-        td:nth-child(1) {
-            width: 7%;
-            text-align: center;
-        }
-
-        th:nth-child(2),
-        /* Item Code */
-        td:nth-child(2) {
-            width: 10%;
-            text-align: center;
-        }
-
-        th:nth-child(3),
-        /* Item Name */
-        td:nth-child(3) {
-            width: 15%;
-        }
-
-        th:nth-child(4),
-        /* Description */
-        td:nth-child(4) {
-            width: 26%;
-        }
-
-        th:nth-child(5),
-        /* Unit Size */
-        td:nth-child(5) {
-            width: 7%;
-            text-align: center;
-        }
-
-        th:nth-child(6),
-        /* Color */
-        td:nth-child(6) {
-            width: 7%;
-            text-align: center;
-        }
-
-        th:nth-child(7),
-        /* Weight (mg) */
-        td:nth-child(7) {
-            width: 7%;
-            text-align: center;
-        }
-
-        th:nth-child(8),
-        /* Info */
-        td:nth-child(8) {
-            width: 4%;
-            text-align: center;
-        }
-
-        th:nth-child(9),
-        /* Actions */
-        td:nth-child(9) {
-            width: 12%;
-            text-align: center;
-        }
-
-        th:nth-child(10),
-        /* Compare */
-        td:nth-child(10) {
-            width: 5%;
-            text-align: center;
-        }
-
-        /* 상단 바 스타일 */
-        .top-bar {
-            background-color: #003366;
-            /* Dark blue top bar */
-            color: white;
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .top-bar-title {
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-
-        .top-bar a {
-            color: white;
-            text-decoration: none;
-            margin-left: 20px;
-        }
-
-        .top-bar a:hover {
-            text-decoration: underline;
-        }
-
-        .top-bar-info {
-            display: flex;
-            align-items: center;
-        }
-
-        .top-bar-info span {
-            margin-right: 10px;
-        }
-
-        /* 로그아웃 버튼 스타일 */
-        .logout-button {
-            background-color: #f44336;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            padding: 5px 10px;
-            text-decoration: none;
-        }
-
-        .logout-button:hover {
-            background-color: #d32f2f;
-        }
-
-        /* 검색 영역 스타일 */
-        .search-container {
-            background-color: #e6e6ff;
-            /* Light purple search container */
-            border-radius: 10px;
-            /* 둥근 모서리 */
-            padding: 15px;
-            margin-top: 20px;
-            margin-bottom: 20px;
-        }
-
-        /* Product List 제목과 Add Product 버튼 스타일 */
-        .product-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        /* 기존 스타일 유지 */
-
-        /* 체크박스 크기 조정 */
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        /* 체크박스 컨테이너 조정 (선택사항) */
-        td:last-child {
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        /* Total Items 스타일 */
-        .total-items {
-            color: black;
-            /* 검은색 글씨 */
-            margin-bottom: 10px;
-            /* 테이블과의 간격 */
-            font-size: 16px;
-            /* 크기 조정 */
-        }
-
-        /* 자동 완성 드롭다운 스타일 */
-        .ui-autocomplete {
-            max-height: 200px;
-            overflow-y: auto;
-            /* 스크롤 가능하도록 설정 */
-            overflow-x: hidden;
-            /* 가로 스크롤 방지 */
-            padding-right: 20px;
-            /* 스크롤바 공간 확보 */
-        }
-
-        .ui-autocomplete li {
-            padding: 5px;
-            font-size: 14px;
-        }
-
-        .ui-autocomplete li:hover {
-            background-color: #f0f0f0;
-        }
-
-        .flash-messages {
-            margin: 10px 0;
-            padding: 10px;
-            text-align: left;
-        }
-
-        .flash-message {
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 20px;
-            margin-bottom: 10px;
-        }
-
-        .flash-message.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .flash-message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .flash-message.info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .flash-message.warning {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
-
-        /* Vitamins & Minerals Modal Styles */
-        .vitamins-minerals-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            overflow: auto;
-        }
-
-        .modal-content {
-            position: relative;
-            background-color: #dceaf7;
-            margin: 15% auto;
-            padding: 50px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 400px;
-            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-            animation: fadeIn 0.3s;
-            border-radius: 30px;
-        }
-
-        .modal-header h2 {
-            margin: 0;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .modal-body {
-            max-height: auto;
-            overflow-y: auto;
-        }
-
-        .vitamins-minerals-list {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .vitamin-column,
-        .mineral-column {
-            width: 48%;
-        }
-
-        .vitamins-minerals-list label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .vitamins-minerals-list input[type="checkbox"] {
-            margin-right: 5px;
-            transform: scale(1.2);
-        }
-
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            padding-top: 10px;
-        }
-
-        .modal-button {
-            background-color: #003366;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-left: 10px;
-        }
-
-        .modal-button.primary {
-            background-color: #003366;
-            color: white;
-        }
-
-        .modal-button:hover {
-            background-color: #1976D2;
-        }
-
-        .modal-button.primary:hover {
-            background-color: #1976D2;
-        }
-
-        /* Animation */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product List</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <style>
+    /* ---------- 모달 애니메이션 (속도 0.3s) ---------- */
+    @keyframes modalFadeIn {
+      from {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+      }
+      to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+    }
+    /* Load Specifications 모달은 그대로 */
+    #loadSpecsModal .modal-content {
+      padding-bottom: 20px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      margin: 0;
+      animation-duration: 0.3s;
+    }
+    /* 그 외 모달은 중앙에서 부드럽게 나타남 */
+    .modal:not(#loadSpecsModal) .modal-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation: modalFadeIn 0.3s ease-out;
+      margin: 0;
+    }
+    /* Select Color 모달: 상단이 짤리지 않도록 상단 5%에 위치 */
+    #colorModal .modal-content {
+      top: 5% !important;
+      transform: translate(-50%, 0) !important;
+    }
+    /* ---------- 기본 스타일 ---------- */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f0f8ff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-top: 20px;
+      font-size: 12px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+      word-break: break-word;
+    }
+    th {
+      background-color: #003366;
+      color: white;
+      font-weight: bold;
+      text-align: center;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    /* ---------- 툴팁 기본 스타일 ---------- */
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      background-color: #333;
+      color: #fff;
+      text-align: left;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1000;
+      white-space: normal;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 12px;
+    }
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+    .claim-tooltip .tooltiptext table tbody tr:nth-child(even) {
+      background-color: #444;
+    }
+    .tooltip:not(.claim-tooltip):not(.remark-tooltip) .tooltiptext {
+      width: 200px;
+      max-width: 200px;
+      text-align: center;
+      padding: 10px;
+    }
+    .claim-tooltip .tooltiptext {
+      width: auto;
+      min-width: 50vw;
+      max-width: 90vw;
+      padding-bottom: 15px;
+    }
+    .remark-tooltip .tooltiptext {
+      width: 400px;
+      max-width: 400px;
+      padding: 10px;
+    }
+    .tooltip .tooltiptext table th:nth-child(1),
+    .tooltip .tooltiptext table td:nth-child(1) {
+      width: 25%;
+      text-align: center;
+    }
+    .tooltip .tooltiptext table th:nth-child(2),
+    .tooltip .tooltiptext table td:nth-child(2) {
+      width: 33%;
+      text-align: center;
+    }
+    .tooltip .tooltiptext table th:nth-child(3),
+    .tooltip .tooltiptext table td:nth-child(3) {
+      width: 20%;
+      text-align: center;
+    }
+    .tooltip .tooltiptext table th:nth-child(4),
+    .tooltip .tooltiptext table td:nth-child(4) {
+      width: 10%;
+      text-align: center;
+    }
+    .tooltip .tooltiptext table th:nth-child(5),
+    .tooltip .tooltiptext table td:nth-child(5) {
+      width: 12%;
+      text-align: center;
+    }
+    .tooltip .tooltiptext::after {
+      content: "";
+      position: absolute;
+      border-width: 5px;
+      border-style: solid;
+    }
+    .tooltip:not(.claim-tooltip):not(.remark-tooltip) .tooltiptext {
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-top: 5px;
+    }
+    .tooltip:not(.claim-tooltip):not(.remark-tooltip) .tooltiptext::after {
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      border-color: transparent transparent #333 transparent;
+    }
+    .claim-tooltip .tooltiptext {
+      top: 50%;
+      right: 100%;
+      transform: translateY(-50%);
+      margin-right: 5px;
+    }
+    .claim-tooltip .tooltiptext::after {
+      top: 50%;
+      right: -5px;
+      transform: translateY(-50%);
+      border-color: transparent #333 transparent transparent;
+    }
+    .remark-tooltip .tooltiptext {
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 5px;
+    }
+    .remark-tooltip .tooltiptext::after {
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-color: #333 transparent transparent transparent;
+    }
+    .re-search-label .tooltip .tooltiptext {
+      white-space: pre-wrap;
+      font-weight: bold;
+    }
+    .message {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    /* ---------- 검색폼 ---------- */
+    .search-form {
+      display: flex;
+      flex-direction: column;
+    }
+    .search-fields {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 5px;
+      align-items: center;
+    }
+    .search-fields input,
+    .search-fields select,
+    button.filter-button {
+      min-width: 150px;
+      line-height: 23px;
+      font-size: 14px;
+    }
+    /* 아이템네임과 디스크립션 입력창 너비 증가 */
+    #item_name, #description {
+      min-width: 250px;
+    }
+    .search-fields input {
+      height: 23px;
+    }
+    .search-fields select {
+      height: 23px;
+    }
+    /* ---------- Select Unit Size, Select Color 버튼 ---------- */
+    button.filter-button {
+      background-color: #e0e0e0;
+      border: 1px solid #888;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #333;
+    }
+    #unit_size_btn, #color_btn {
+      background-color: #013f7d;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      height: 30px;
+      line-height: 30px;
+      padding: 0 10px;
+    }
+    #unit_size_btn:hover, #color_btn:hover {
+      background-color: #1976D2;
+    }
+    /* ---------- 오른쪽 검색 영역: 3줄 구성, 모두 우측 정렬 ---------- */
+    .right-search-region {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+    }
+    .top-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .middle-row, .bottom-row {
+      /* 단일 버튼 줄 */
+    }
+    .vertical-search-btn {
+      width: 100px;
+      height: 30px;
+      line-height: 30px;
+      text-align: center;
+      background-color: #013f7d;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .vertical-search-btn:hover {
+      background-color: #1976D2;
+    }
+    /* ---------- Add Product 버튼 ---------- */
+    .green-button {
+      height: 30px;
+      line-height: 30px;
+      padding: 0 10px;
+      min-width: auto;
+      font-size: 14px;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      text-decoration: none;
+      background-color: #013f7d;
+    }
+    .green-button:hover {
+      background-color: #1976D2;
+    }
+    /* ---------- Add Claim Search, Add Vitamins & Minerals, Load Specifications 버튼 ---------- */
+    .addclaim-button {
+      height: 30px;
+      line-height: 30px;
+      padding: 0 10px;
+      font-size: 14px;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      text-decoration: none;
+      background-color: #003366;
+      min-width: 150px;
+    }
+    .addclaim-button:hover {
+      background-color: #1976D2;
+    }
+    /* ---------- 클레임 검색필드 수평 정렬 (줄바꿈 위해 flex-wrap 추가) ---------- */
+    .claim-search-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .claim-search-row input,
+    .claim-search-row select {
+      height: 23px !important;
+      line-height: 23px !important;
+      font-size: 14px;
+    }
+    .claim-search-row select {
+      min-width: 200px;
+    }
+    /* ---------- Remove 버튼 ---------- */
+    .remove-claim-search {
+      background-color: #f44336;
+      color: white;
+      padding: 3px 10px;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      margin: 0 2px;
+    }
+    .remove-claim-search:hover {
+      background-color: #d32f2f;
+    }
+    /* ---------- 액션 버튼 ---------- */
+    .view-button {
+      background-color: #2196F3;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      color: white;
+      margin: 0 2px;
+      text-decoration: none;
+    }
+    .view-button:hover {
+      background-color: #1976D2;
+    }
+    .edit-button {
+      background-color: #4CAF50;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      color: white;
+      margin: 0 2px;
+      text-decoration: none;
+    }
+    .edit-button:hover {
+      background-color: #45a049;
+    }
+    .delete-button {
+      background-color: #f44336;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      color: white;
+      margin: 0 2px;
+      text-decoration: none;
+    }
+    .delete-button:hover {
+      background-color: #d32f2f;
+    }
+    /* ---------- 액션 버튼 컨테이너 ---------- */
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px;
+    }
+    /* ---------- Info 탭 툴팁 아이콘 ---------- */
+    .claim-tooltip,
+    .remark-tooltip {
+      font-size: 16px;
+    }
+    .info-icons {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .star-icon {
+      color: gold;
+    }
+    .exclamation-icon {
+      color: red;
+    }
+    th:nth-child(1), td:nth-child(1) {
+      width: 7%;
+      text-align: center;
+    }
+    th:nth-child(2), td:nth-child(2) {
+      width: 10%;
+      text-align: center;
+    }
+    th:nth-child(3), td:nth-child(3) {
+      width: 15%;
+    }
+    th:nth-child(4), td:nth-child(4) {
+      width: 26%;
+    }
+    th:nth-child(5), td:nth-child(5) {
+      width: 7%;
+      text-align: center;
+    }
+    th:nth-child(6), td:nth-child(6) {
+      width: 7%;
+      text-align: center;
+    }
+    th:nth-child(7), td:nth-child(7) {
+      width: 7%;
+      text-align: center;
+    }
+    th:nth-child(8), td:nth-child(8) {
+      width: 4%;
+      text-align: center;
+    }
+    th:nth-child(9), td:nth-child(9) {
+      width: 12%;
+      text-align: center;
+    }
+    th:nth-child(10), td:nth-child(10) {
+      width: 5%;
+      text-align: center;
+    }
+    /* ---------- 상단 바 ---------- */
+    .top-bar {
+      background-color: #003366;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .top-bar-title {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+    .top-bar a {
+      color: white;
+      text-decoration: none;
+      margin-left: 20px;
+    }
+    .top-bar a:hover {
+      text-decoration: underline;
+    }
+    .top-bar-info {
+      display: flex;
+      align-items: center;
+    }
+    .top-bar-info span {
+      margin-right: 10px;
+    }
+    .logout-button {
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 5px 10px;
+      text-decoration: none;
+    }
+    .logout-button:hover {
+      background-color: #d32f2f;
+    }
+    /* ---------- 제품 헤더: 상단에 User Guide 버튼 추가 ---------- */
+    .product-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .user-guide-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    /* ---------- Total Items 및 Add Product 버튼 (새 행) ---------- */
+    .total-items-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .total-items {
+      color: black;
+      font-size: 16px;
+    }
+    /* ---------- 검색 컨테이너 ---------- */
+    .search-container {
+      background-color: #e6e6ff;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    .search-flex-container {
+      display: flex;
+      gap: 10px;
+    }
+    .left-search-region {
+      flex: 1;
+    }
+    /* ---------- 오른쪽 검색 영역: 3줄 구성, 모두 우측 정렬 ---------- */
+    .right-search-region {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+    }
+    .top-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .middle-row, .bottom-row {
+      /* 단일 버튼 줄 */
+    }
+    .vertical-search-btn {
+      width: 100px;
+      height: 30px;
+      line-height: 30px;
+      text-align: center;
+      background-color: #013f7d;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .vertical-search-btn:hover {
+      background-color: #1976D2;
+    }
+    /* ---------- 자동완성 결과창: 스크롤 가능 높이 설정 (결과 제한 해제) ---------- */
+    .ui-autocomplete {
+      max-height: 250px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 20px;
+    }
+    .ui-autocomplete li {
+      padding: 5px;
+      font-size: 14px;
+    }
+    .ui-autocomplete li:hover {
+      background-color: #f0f0f0;
+    }
+    /* ---------- 모달 기본 스타일 (원본 유지) ---------- */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    .modal-content {
+      background-color: #dceaf7;
+      padding: 70px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 1000px;
+      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+      border-radius: 30px;
+      overflow: auto;
+    }
+    .modal-header {
+      margin-bottom: 10px;
+    }
+    .modal-body {
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    .modal-header-flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-column label,
+    #colorHorizontal label,
+    .vitamins-minerals-list label,
+    #unitSizeOptions label {
+      display: inline-flex;
+      align-items: center;
+      margin: 3px 0;
+    }
+    .modal-column label input[type="checkbox"],
+    #colorHorizontal label input[type="checkbox"],
+    .vitamins-minerals-list label input[type="checkbox"],
+    #unitSizeOptions label input[type="checkbox"] {
+      margin-right: 5px;
+    }
+    #unitSizeModal .modal-content,
+    #colorModal .modal-content {
+      font-size: 12px;
+    }
+    #unitSizeModal .modal-column,
+    #colorModal .modal-column {
+      min-width: 200px;
+      max-width: 100%;
+    }
+    #colorModal #colorHorizontal {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    #colorModal #colorHorizontal label {
+      white-space: nowrap;
+      font-size: 12px;
+    }
+    #vitaminsMineralsModal .modal-content {
+      max-width: 600px;
+      font-size: 12px;
+      margin: 5% auto;
+      position: relative;
+      width: 100%;
+      overflow: auto;
+      padding: 20px;
+    }
+    #vitaminsMineralsModal .modal-content {
+      max-height: 80vh;
+      overflow: hidden;
+      padding: 10px;
+    }
+    .vitamins-minerals-list {
+      display: flex;
+      gap: 10px;
+    }
+    .vitamins-minerals-list .vitamin-column {
+      width: 48%;
+      margin-left: 3%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .vitamins-minerals-list .mineral-column {
+      width: 48%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .vitamins-minerals-list label {
+      margin: 2px 0;
+    }
+    #loadSpecsModal input[type="text"] {
+      flex: 1;
+      height: 40px;
+      font-size: 16px;
+      padding: 5px;
+    }
+    #loadSpecsModal .button-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .modal-grid {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+    #unitSizeModal .modal-grid {
+      flex-wrap: nowrap;
+    }
+    #colorModal .modal-grid {
+      flex-wrap: nowrap;
+    }
+    .modal-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 10px;
+    }
+    .modal-button {
+      background-color: #003366;
+      color: white;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 10px;
+      margin-top: 20px;
+    }
+    .modal-button.primary {
+      background-color: #003366;
+      color: white;
+    }
+    .modal-button:hover,
+    .modal-button.primary:hover {
+      background-color: #1976D2;
+    }
+  </style>
 </head>
-
 <body>
-    <div class="top-bar">
-        <div class="top-bar-title">
-            <img src="https://pplx-res.cloudinary.com/image/upload/v1739981033/user_uploads/CwyhfCVnxEiFBLi/image.jpg" alt="USP Logo" height="60">
-        </div>
-        <div class="top-bar-info">
-            <span>
-                {% if session['role'] == 'master' %}
-                Master
-                {% elif session['role'] == 'admin' %}
-                관리자
-                {% elif session['role'] == 'viewer' %}
-                열람 전용
-                {% endif %}
-            </span>
-            {% if session['role'] in ['admin', 'master'] %}
-            <!-- Add Save DB Button -->
-            <form action="{{ url_for('save_db') }}" method="post" style="display:inline;">
-                <button type="submit" class="logout-button">Save DB</button>
-            </form>
-            <!-- Add Download DB Button -->
-            <a href="{{ url_for('download_db') }}" class="logout-button">Download DB</a>
-
-            <!-- Add Find DB Button -->
-            <a href="{{ url_for('find_db') }}" class="logout-button">Find DB</a>
-
-            {% endif %}
-
-            <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
-
-        </div>
+  <div class="top-bar">
+    <div class="top-bar-title">
+      <img src="https://pplx-res.cloudinary.com/image/upload/v1739981033/user_uploads/CwyhfCVnxEiFBLi/image.jpg" alt="USP Logo" height="60" />
     </div>
-    <div class="product-header">
-        <h1>USP Product Spec List</h1>
-        <a href="{{ url_for('add_product') }}"><button class="green-button">Add Product</button></a>
-    </div>
-    {% if messages %}
-    {% for category, message in messages %}
-    <div class="message {{ category }}">
-        {{ message }}
-    </div>
-    {% endfor %}
-    {% endif %}
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="flash-messages">
-        {% for category, message in messages %}
-        <div class="flash-message {{ category }}">{{ message }}</div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
-    <div class="search-container">
-        <h2>Product Search</h2>
-        <form action="{{ url_for('search_products') }}" method="GET" class="search-form">
-            <div class="search-fields">
-                <!-- Product Type Select -->
-                <select name="product_type">
-                    <option value="">All Types</option>
-                    <option value="Tablet" {% if search_filters.get('product_type')=='Tablet' %}selected{% endif %}>
-                        Tablet
-                    </option>
-                    <option value="Softgel" {% if search_filters.get('product_type')=='Softgel' %}selected{% endif %}>
-                        Softgel</option>
-                    <option value="HardCapsule" {% if search_filters.get('product_type')=='HardCapsule' %}selected{%
-                        endif %}>HardCapsule</option>
-                    <option value="Sachet" {% if search_filters.get('product_type')=='Sachet' %}selected{% endif %}>
-                        Sachet</option>
-                    <option value="Powder" {% if search_filters.get('product_type')=='Powder' %}selected{% endif %}>
-                        Powder</option>
-                    <option value="Liquid" {% if search_filters.get('product_type')=='Liquid' %}selected{% endif %}>
-                        Liquid</option>
-                    <option value="PH Tablet" {% if search_filters.get('product_type')=='PH Tablet' %}selected{%
-                        endif %}>
-                        PH Tablet</option>
-                    <option value="PH Hard Capsule" {% if search_filters.get('product_type')=='PH Hard Capsule'
-                        %}selected{% endif %}>
-                        PH Hard Capsule</option>
-                    <option value="PH Softgel" {% if search_filters.get('product_type')=='PH Softgel' %}selected{%
-                        endif %}>
-                        PH Softgel</option>
-                </select>
-                <!-- 기본 정보 검색 필드 -->
-                <input type="text" name="item_code" id="item_code" placeholder="Item Code" value="{{ search_filters.get('item_code', '') }}">
-                <input type="text" name="item_name" id="item_name" placeholder="Item Name" value="{{ search_filters.get('item_name', '') }}">
-                <input type="text" name="description" id="description" placeholder="Description" value="{{ search_filters.get('description', '') }}">
-                <input type="text" name="unit_size" id="unit_size" placeholder="Unit Size" value="{{ search_filters.get('unit_size', '') }}">
-                <input type="text" name="color" id="color" placeholder="Color" value="{{ search_filters.get('color', '') }}">
-                <input type="number" name="weight" id="weight" step="0.0001" placeholder="Weight (mg)" value="{{ search_filters.get('weight', '') }}">
-                <input type="number" name="weight_tolerance" placeholder="Weight Tolerance (%)" value="{{ search_filters.get('weight_tolerance', '') }}">
-                <div id="claim-search-container">
-                    {% if search_filters.get('claim_main') %}
-                    {% for i in range(search_filters['claim_main']|length) %}
-                    <div class="claim-search-row">
-                        <input type="text" name="claim_main[]" class="claim-main-input" placeholder="Claim Main" value="{{ search_filters['claim_main'][i] }}">
-                        <input type="text" name="claim_description[]" class="claim-description-input" placeholder="Claim Description" value="{{ search_filters['claim_description'][i] }}">
-                        <input type="number" name="claim_concentration[]" step="0.0001" placeholder="Claim Concentration" value="{{ search_filters['claim_concentration'][i] }}">
-                        <select name="claim_unit[]">
-                            <option value="">All Units</option>
-                            <option value="mg" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]
-                                == 'mg' %}selected{% endif %}>mg</option>
-                            <option value="mcg" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]
-                                == 'mcg' %}selected{% endif %}>mcg</option>
-                            <option value="IU" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]
-                                == 'IU' %}selected{% endif %}>IU</option>
-                            <option value="mgaTE" {% if search_filters.get('claim_unit') and
-                                search_filters['claim_unit'][i] == 'mgaTE' %}selected{% endif %}>mgaTE</option>
-                            <option value="mgRAE" {% if search_filters.get('claim_unit') and
-                                search_filters['claim_unit'][i] == 'mgRAE' %}selected{% endif %}>mgRAE</option>
-                            <option value="mcgRAE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]
-                                == 'mcgRAE' %}selected{% endif %}>mcgRAE</option>
-                            <option value="mgNE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]
-                                == 'mgNE' %}selected{% endif %}>mgNE</option>
-                            <option value="mcgNE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]
-                                == 'mcgNE' %}selected{% endif %}>mcgNE</option>
-                            <option value="mgDFE" {% if search_filters.get('claim_unit') and
-                                search_filters['claim_unit'][i] == 'mgDFE' %}selected{% endif %}>mgDFE</option>
-                            <option value="mcgDFE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]
-                                == 'mcgDFE' %}selected{% endif %}>mcgDFE</option>
-                            <option value="B cfu" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]
-                                == 'B cfu' %}selected{% endif %}>B cfu</option>
-                        </select>
-                        <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)" value="{% if search_filters.get('claim_concentration_tolerance') and
-                            search_filters.claim_concentration_tolerance is iterable and i <
-                            search_filters.claim_concentration_tolerance|length %}{{
-                            search_filters.claim_concentration_tolerance[i] }}{% endif %}">
-                        <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
-                    </div>
-                    {% endfor %}
-                    {% else %}
-                    <div class="claim-search-row">
-                        <input type="text" name="claim_main[]" class="claim-main-input" placeholder="Claim Main">
-                        <input type="text" name="claim_description[]" class="claim-description-input" placeholder="Claim Description">
-                        <input type="number" name="claim_concentration[]" id="claim_concentration" step="0.0001" placeholder="Claim Concentration">
-                        <select name="claim_unit[]">
-                            <option value="">All Units</option>
-                            <option value="mg">mg</option>
-                            <option value="mcg">mcg</option>
-                            <option value="IU">IU</option>
-                            <option value="mgaTE">mgaTE</option>
-                            <option value="mgRAE">mgRAE</option>
-                            <option value="mcgRAE">mcgRAE</option>
-                            <option value="mgNE">mgNE</option>
-                            <option value="mcgNE">mcgNE</option>
-                            <option value="mgDFE">mgDFE</option>
-                            <option value="mcgDFE">mcgDFE</option>
-                            <option value="B cfu">B cfu</option>
-                        </select>
-                        <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)">
-                        <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="add-claim-search-container">
-                    <button type="button" class="green-button" onclick="addClaimSearch()">Add Claim Search</button>
-                    <button type="button" class="addclaim-button" onclick="openVitaminsMineralsModal()">Add Vitamins & Minerals</button>
-                </div>
-            </div>
-            <div class="search-buttons">
-                <button type="submit">Search</button>
-                <a href="{{ url_for('clear_search') }}">Clear</a>
-                <button type="button" class="compare-button" onclick="submitCompareForm()">Compare</button>
-            </div>
+    <div class="top-bar-info">
+      <span>
+        {% if session['role'] == 'master' %}
+          Master
+        {% elif session['role'] == 'admin' %}
+          관리자
+        {% elif session['role'] == 'viewer' %}
+          열람 전용
+        {% endif %}
+      </span>
+      {% if session['role'] in ['admin', 'master'] %}
+        <form action="{{ url_for('save_db') }}" method="post" style="display:inline;">
+          <button type="submit" class="logout-button">Save DB</button>
         </form>
+        <a href="{{ url_for('download_db') }}" class="logout-button">Download DB</a>
+        <a href="{{ url_for('find_db') }}" class="logout-button">Find DB</a>
+      {% endif %}
+      <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
     </div>
-    <div class="total-items">
-        Total {{ products|length }} Items
+  </div>
+  <!-- 상단 제품 헤더: User Guide 버튼 추가 -->
+  <div class="product-header">
+    <h1>USP Product Spec List</h1>
+    <div class="user-guide-buttons">
+      <a href="{{ url_for('user_guide_kor') }}"><button class="green-button">User Guide (KOR)</button></a>
+      <a href="{{ url_for('user_guide_eng') }}"><button class="green-button">User Guide (ENG)</button></a>
     </div>
-    <form id="compare-form" action="{{ url_for('compare_products') }}" method="POST">
-        <table>
-            <thead>
-                <tr>
-                    <th>Product Type</th>
-                    <th>Item Code</th>
-                    <th>Item Name</th>
-                    <th>Description</th>
-                    <th>Unit Size</th>
-                    <th>Color</th>
-                    <th>Weight (mg)</th>
-                    <th>Info</th>
-                    <th>Actions</th>
-                    <th>Compare</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for product in products %}
-                <tr>
-                    <td style="text-align: center;">
-                        {% if product_categories and product[0] in product_categories %}
-                        <span class="product-type">{{ product_categories[product[0]] }}</span>
-                        {% else %}
-                        <span>Unknown</span>
-                        {% endif %}
-                    </td>
-                    <td style="text-align: center;">{{ product[0] }}</td>
-                    <td>{{ product[1]|wordwrap(60)|replace('\n', '<br>')|safe }}</td>
-                    <td>{{ product[2]|wordwrap(60)|replace('\n', '<br>')|safe }}</td>
-                    <td style="text-align: center;">{{ product[3] }}</td>
-                    <td style="text-align: center;">{{ product[4] }}</td>
-                    <td style="text-align: center;">{{ product[5] }}</td>
-                    <td style="text-align: center;">
-                        <div class="info-icons">
-                            <div class="tooltip claim-tooltip" data-container="body">
-                                <span><i class="fas fa-star star-icon"></i></span>
-                                <span class="tooltiptext">
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Main</th>
-                                                <th>Description</th>
-                                                <th>Claim</th>
-                                                <th>Unit</th>
-                                                <th>Test</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for claim in product_claims.get(product[0], []) %}
-                                            <tr>
-                                                <td>{{ claim[0] }}</td>
-                                                <td>{{ claim[1] }}</td>
-                                                <td>{{ claim[2] }}</td>
-                                                <td>{{ claim[3] }}</td>
-                                                <td>{{ claim[4] }}</td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </span>
-                            </div>
-                            {% if product[7] is not none and product[7] != 'None' and product[7]|trim != '' %}
-                            <div class="tooltip remark-tooltip" data-container="body">
-                                <span><i class="fas fa-exclamation-circle exclamation-icon"></i></span>
-                                <span class="tooltiptext">{{ product[7] }}</span>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td style="text-align: center;">
-                        <a href="{{ url_for('view_product', item_code=product[0]) }}" class="view-button">View</a>
-                        <a href="{{ url_for('edit_product', item_code=product[0]) }}" class="edit-button">Edit</a>
-                        <a href="{{ url_for('delete_product', item_code=product[0]) }}" class="delete-button" onclick="return confirm('Are you sure you want to delete this product?');">Delete</a>
-                    </td>
-                    <td style="text-align: center;">
-                        <input type="checkbox" name="item_code[]" value="{{ product[0] }}">
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </form>
-
-
-    <!-- Vitamins & Minerals Modal -->
-    <div id="vitaminsMineralsModal" class="vitamins-minerals-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Add Vitamins & Minerals</h2>
-            </div>
-            <div class="modal-body">
-                <div class="vitamins-minerals-list">
+  </div>
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="message {{ category }}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="flash-message {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  <div class="search-container">
+    <h2>Product Search</h2>
+    <form action="{{ url_for('search_products') }}" method="GET" class="search-form">
+      <div class="search-flex-container">
+        <div class="left-search-region">
+          <!-- 기본 검색 필드 -->
+          <div class="search-fields">
+            <select name="product_type">
+              <option value="">All Types</option>
+              <option value="Tablet" {% if search_filters.get('product_type')=='Tablet' %}selected{% endif %}>Tablet</option>
+              <option value="Softgel" {% if search_filters.get('product_type')=='Softgel' %}selected{% endif %}>Softgel</option>
+              <option value="Hard Capsule" {% if search_filters.get('product_type')=='Hard Capsule' %}selected{% endif %}>Hard Capsule</option>
+              <option value="Sachet" {% if search_filters.get('product_type')=='Sachet' %}selected{% endif %}>Sachet</option>
+              <option value="Powder" {% if search_filters.get('product_type')=='Powder' %}selected{% endif %}>Powder</option>
+              <option value="Liquid" {% if search_filters.get('product_type')=='Liquid' %}selected{% endif %}>Liquid</option>
+              <option value="PH Tablet" {% if search_filters.get('product_type')=='PH Tablet' %}selected{% endif %}>PH Tablet</option>
+              <option value="PH Hard Capsule" {% if search_filters.get('product_type')=='PH Hard Capsule' %}selected{% endif %}>PH Hard Capsule</option>
+              <option value="PH Softgel" {% if search_filters.get('product_type')=='PH Softgel' %}selected{% endif %}>PH Softgel</option>
+            </select>
+            <input type="text" name="item_code" id="item_code" placeholder="Item Code" value="{{ search_filters.get('item_code', '') }}" />
+            <input type="text" name="item_name" id="item_name" placeholder="Item Name" value="{{ search_filters.get('item_name', '') }}" />
+            <input type="text" name="description" id="description" placeholder="Description" value="{{ search_filters.get('description', '') }}" />
+            <input type="text" name="weight" id="weight" step="0.0001" placeholder="Weight (mg)" value="{{ search_filters.get('weight', '') }}" />
+            <input type="text" name="weight_tolerance" placeholder="Weight Tolerance (%)" value="{{ search_filters.get('weight_tolerance', '') }}" />
+            <!-- Select Unit Size & Select Color 버튼 -->
+            <button type="button" id="unit_size_btn" class="filter-button">Select Unit Size</button>
+            <input type="hidden" name="unit_size" id="unit_size_hidden" value="{{ search_filters.get('unit_size', '') }}" />
+            <button type="button" id="color_btn" class="filter-button">Select Color</button>
+            <input type="hidden" name="color" id="color_hidden" value="{{ search_filters.get('color', '') }}" />
+          </div>
+          <!-- 클레임 검색 필드 (기본정보 검색 필드와 별도 줄바꿈) -->
+          <div id="claim-search-container">
+            {% if search_filters.get('claim_main') %}
+              {% for i in range(search_filters['claim_main']|length) %}
+                <div class="claim-search-row">
+                  <input type="text" name="claim_main[]" class="claim-main-input" placeholder="Claim Main" value="{{ search_filters['claim_main'][i] }}">
+                  <input type="text" name="claim_description[]" class="claim-description-input" placeholder="Claim Description" value="{{ search_filters['claim_description'][i] }}">
+                  <input type="number" name="claim_concentration[]" step="0.0001" placeholder="Claim Concentration" value="{{ search_filters['claim_concentration'][i] }}">
+                  <select name="claim_unit[]">
+                    <option value="">All Units</option>
+                    <option value="mg" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]=='mg' %}selected{% endif %}>mg</option>
+                    <option value="mcg" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]=='mcg' %}selected{% endif %}>mcg</option>
+                    <option value="IU" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]=='IU' %}selected{% endif %}>IU</option>
+                    <option value="mgaTE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]=='mgaTE' %}selected{% endif %}>mgaTE</option>
+                    <option value="mgRAE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]=='mgRAE' %}selected{% endif %}>mgRAE</option>
+                    <option value="mcgRAE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]=='mcgRAE' %}selected{% endif %}>mcgRAE</option>
+                    <option value="mgNE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]=='mgNE' %}selected{% endif %}>mgNE</option>
+                    <option value="mcgNE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]=='mcgNE' %}selected{% endif %}>mcgNE</option>
+                    <option value="mgDFE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]=='mgDFE' %}selected{% endif %}>mgDFE</option>
+                    <option value="mcgDFE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]=='mcgDFE' %}selected{% endif %}>mcgDFE</option>
+                    <option value="B cfu" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]=='B cfu' %}selected{% endif %}>B cfu</option>
+                  </select>
+                  <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)" value="{% if search_filters.get('claim_concentration_tolerance') and i < search_filters.claim_concentration_tolerance|length %}{{ search_filters.claim_concentration_tolerance[i] }}{% endif %}">
+                  <select name="claim_filter_type[]">
+                    <option value="include" selected>Include(포함)</option>
+                    <option value="exclude">Exclude(제외)</option>
+                  </select>
+                  <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="modal-button primary" onclick="closeVitaminsMineralsModal()">Close</button>
-                <button type="button" class="modal-button primary" onclick="addSelectedVitaminsMinerals()">Add Selected</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        $(function() {
-            // 자동 완성 기능 초기화 함수
-            function initAutocomplete(inputId, field, minLength = 1) {
-                $('#' + inputId).autocomplete({
-                    source: function(request, response) {
-                        $.getJSON("/autocomplete", {
-                            query: request.term,
-                            field: field
-                        }, function(data) {
-                            response($.map(data, function(item) {
-                                return {
-                                    label: item,
-                                    value: item
-                                };
-                            }));
-                        });
-                    },
-                    minLength: minLength,
-                    maxShowItems: 50, // 최대 드롭다운 목록 개수
-                    select: function(event, ui) {
-                        $(this).val(ui.item.value);
-                        return false;
-                    }
-                }).autocomplete("instance")._renderItem = function(ul, item) {
-                    return $("<li>")
-                        .append("<div>" + item.label + "</div>")
-                        .appendTo(ul);
-                };
-
-                // 클릭 시 드롭다운 표시
-                $('#' + inputId).on('click', function() {
-                    $(this).autocomplete("search", "");
-                });
-            }
-
-            // 자동 완성 기능 초기화
-            initAutocomplete('item_code', 'item_code');
-            initAutocomplete('item_name', 'item_name');
-            initAutocomplete('description', 'description');
-            // Unit Size와 Color 필드에 대해 minLength를 0으로 설정하여 클릭 시 드롭다운이 나타나도록 함
-            initAutocomplete('unit_size', 'unit_size', 0);
-            initAutocomplete('color', 'color', 0);
-
-            function initClaimDescriptionAutocomplete(element, mainClaimValue) {
-                $(element).autocomplete({
-                    source: function(request, response) {
-                        $.getJSON("/autocomplete", {
-                            field: 'claim_description',
-                            main_claim: mainClaimValue,
-                            query: request.term // 검색어 추가
-                        }, function(data) {
-                            response($.map(data, function(item) {
-                                return {
-                                    label: item,
-                                    value: item
-                                };
-                            }));
-                        });
-                    },
-                    minLength: 0,
-                    maxShowItems: 30, // 최대 드롭다운 목록 개수
-                    select: function(event, ui) {
-                        $(this).val(ui.item.value);
-                    }
-                }).focus(function() {
-                    $(this).autocomplete("search", "");
-                }).autocomplete("instance")._renderItem = function(ul, item) {
-                    return $("<li>")
-                        .append("<div>" + item.label + "</div>")
-                        .appendTo(ul);
-                };
-            }
-
-            function initClaimRow(claimRow) {
-                var mainClaimInput = $(claimRow).find('.claim-main-input');
-                var claimDescriptionInput = $(claimRow).find('.claim-description-input');
-                mainClaimInput.autocomplete({
-                    source: function(request, response) {
-                        $.getJSON("/autocomplete", {
-                            query: request.term,
-                            field: 'claim_main'
-                        }, function(data) {
-                            response($.map(data, function(item) {
-                                return {
-                                    label: item,
-                                    value: item
-                                };
-                            }));
-                        });
-                    },
-                    minLength: 1,
-                    maxShowItems: 30, // 최대 드롭다운 목록 개수
-                    select: function(event, ui) {
-                        $(this).val(ui.item.value);
-                        initClaimDescriptionAutocomplete(claimDescriptionInput, ui.item.value);
-                    }
-                }).autocomplete("instance")._renderItem = function(ul, item) {
-                    return $("<li>")
-                        .append("<div>" + item.label + "</div>")
-                        .appendTo(ul);
-                };
-                mainClaimInput.on('change', function() {
-                    initClaimDescriptionAutocomplete(claimDescriptionInput, $(this).val());
-                });
-                initClaimDescriptionAutocomplete(claimDescriptionInput, mainClaimInput.val());
-            }
-
-            // 기존 클레임 검색 행에 대해 자동완성 초기화
-            $('.claim-search-row').each(function() {
-                initClaimRow(this);
-            });
-
-            // 클레임 검색 행 HTML 템플릿
-            window.claimSearchRowTemplate = `
-            <div class="claim-search-row">
+              {% endfor %}
+            {% else %}
+              <div class="claim-search-row">
                 <input type="text" name="claim_main[]" class="claim-main-input" placeholder="Claim Main">
                 <input type="text" name="claim_description[]" class="claim-description-input" placeholder="Claim Description">
-                <input type="number" name="claim_concentration[]" placeholder="Claim Concentration">
+                <input type="number" name="claim_concentration[]" step="0.0001" placeholder="Claim Concentration">
                 <select name="claim_unit[]">
-                    <option value="">All Units</option>
-                    <option value="mg">mg</option>
-                    <option value="mcg">mcg</option>
-                    <option value="IU">IU</option>
-                    <option value="mgaTE">mgaTE</option>
-                    <option value="mgRAE">mgRAE</option>
-                    <option value="mcgRAE">mcgRAE</option>
-                    <option value="mgNE">mgNE</option>
-                    <option value="mcgNE">mcgNE</option>
-                    <option value="mgDFE">mgDFE</option>
-                    <option value="mcgDFE">mcgDFE</option>
-                    <option value="B cfu">B cfu</option>
+                  <option value="">All Units</option>
+                  <option value="mg">mg</option>
+                  <option value="mcg">mcg</option>
+                  <option value="IU">IU</option>
+                  <option value="mgaTE">mgaTE</option>
+                  <option value="mgRAE">mgRAE</option>
+                  <option value="mcgRAE">mcgRAE</option>
+                  <option value="mgNE">mgNE</option>
+                  <option value="mcgNE">mcgNE</option>
+                  <option value="mgDFE">mgDFE</option>
+                  <option value="mcgDFE">mcgDFE</option>
+                  <option value="B cfu">B cfu</option>
                 </select>
                 <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)">
+                <select name="claim_filter_type[]">
+                  <option value="include" selected>Include(포함)</option>
+                  <option value="exclude">Exclude(제외)</option>
+                </select>
                 <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
-            </div>
-        `;
+              </div>
+            {% endif %}
+          </div>
+          <!-- 추가 버튼들 -->
+          <div class="left-buttons" style="margin-top: 5px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="addclaim-button" onclick="addClaimSearch(5)">Add Claim Search</button>
+            <button type="button" class="addclaim-button" onclick="openVitaminsMineralsModal()">Add Vitamins &amp; Minerals</button>
+            <button type="button" class="addclaim-button" onclick="openLoadSpecificationsModal()">Load Specifications</button>
+          </div>
+        </div>
+        <!-- 오른쪽 검색 영역: 3줄 구성, 모두 우측 정렬 -->
+        <div class="right-search-region">
+          <div class="top-row">
+            <label class="re-search-label">
+              <input type="checkbox" id="reSearchCheckbox" name="re_search">
+              <span class="tooltip">
+                <i class="fas fa-exclamation-circle"></i>
+                <span class="tooltiptext">Re-search within results&#10;결과 내 재검색</span>
+              </span>
+            </label>
+            <button type="submit" class="vertical-search-btn">Search</button>
+          </div>
+          <div class="middle-row">
+            <a href="{{ url_for('clear_search') }}" class="vertical-search-btn">Clear</a>
+          </div>
+          <div class="bottom-row">
+            <button type="button" class="vertical-search-btn" onclick="submitCompareForm()">Compare</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+  <!-- Total Items 및 Add Product 버튼 (Add Product 버튼은 우측에 배치) -->
+  <div class="total-items-container">
+    <div class="total-items">
+      Total {{ products|length }} Items
+    </div>
+    <div class="add-product-button">
+      <a href="{{ url_for('add_product') }}"><button class="green-button">Add Product</button></a>
+    </div>
+  </div>
+  <form id="compare-form" action="{{ url_for('compare_products') }}" method="POST">
+    <table>
+      <thead>
+        <tr>
+          <th>Product Type</th>
+          <th>Item Code</th>
+          <th>Item Name</th>
+          <th>Description</th>
+          <th>Unit Size</th>
+          <th>Color</th>
+          <th>Weight (mg)</th>
+          <th>Info</th>
+          <th>Actions</th>
+          <th>Compare</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+          <tr>
+            <td style="text-align: center;">
+              {% if product_categories and product[0] in product_categories %}
+                <span class="product-type">{{ product_categories[product[0]] }}</span>
+              {% else %}
+                <span>Unknown</span>
+              {% endif %}
+            </td>
+            <td style="text-align: center;">{{ product[0] }}</td>
+            <td>{{ product[1]|wordwrap(60)|replace('\n', '<br>')|safe }}</td>
+            <td>{{ product[2]|wordwrap(60)|replace('\n', '<br>')|safe }}</td>
+            <td style="text-align: center;">{{ product[3] }}</td>
+            <td style="text-align: center;">{{ product[4] }}</td>
+            <td style="text-align: center;">{{ product[5] }}</td>
+            <td style="text-align: center;">
+              <div class="info-icons">
+                <div class="tooltip claim-tooltip" data-container="body">
+                  <span><i class="fas fa-star star-icon"></i></span>
+                  <span class="tooltiptext">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Main</th>
+                          <th>Description</th>
+                          <th>Claim</th>
+                          <th>Unit</th>
+                          <th>Test</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for claim in product_claims.get(product[0], []) %}
+                          <tr>
+                            <td>{{ claim[0] }}</td>
+                            <td>{{ claim[1] }}</td>
+                            <td>{{ claim[2] }}</td>
+                            <td>{{ claim[3] }}</td>
+                            <td>{{ claim[4] }}</td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </span>
+                </div>
+                {% if product[7] is not none and product[7] != 'None' and product[7]|trim != '' %}
+                  <div class="tooltip remark-tooltip" data-container="body">
+                    <span><i class="fas fa-exclamation-circle exclamation-icon"></i></span>
+                    <span class="tooltiptext">{{ product[7] }}</span>
+                  </div>
+                {% endif %}
+              </div>
+            </td>
+            <td style="text-align: center;">
+              <div class="action-buttons">
+                <a href="{{ url_for('view_product', item_code=product[0]) }}" class="view-button">View</a>
+                <a href="{{ url_for('edit_product', item_code=product[0]) }}" class="edit-button">Edit</a>
+                <a href="{{ url_for('delete_product', item_code=product[0]) }}" class="delete-button" onclick="return confirm('Are you sure you want to delete this product?');">Delete</a>
+              </div>
+            </td>
+            <td style="text-align: center;">
+              <input type="checkbox" name="item_code[]" value="{{ product[0] }}">
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </form>
 
-            // 새로운 클레임 검색 행 추가
-            window.addClaimSearch = function(count = 5) {
-                const container = document.getElementById('claim-search-container');
-                // Add 5 claim rows at once
-                for (let i = 0; i < count; i++) {
-                    const newClaimRow = document.createElement('div');
-                    newClaimRow.innerHTML = window.claimSearchRowTemplate;
-                    container.appendChild(newClaimRow);
-                    initClaimRow(newClaimRow); // 동적으로 추가된 행에 대해서도 자동 완성 기능 초기화
-                }
-            };
+  <!-- ---------- Select Color 모달 (원본 디자인 유지) ---------- -->
+  <div id="colorModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header modal-header-flex">
+        <h2>Select Color</h2>
+        <button type="button" class="modal-button primary" onclick="applyColorSelection()">Apply</button>
+      </div>
+      <div id="colorHorizontal">
+        <label><input type="checkbox" value="Uncoated"> Uncoated</label>
+        <label><input type="checkbox" value="Clear"> Clear</label>
+        <label><input type="checkbox" value="White"> White</label>
+        <label><input type="checkbox" value="Beige"> Beige</label>
+        <label><input type="checkbox" value="Yellow"> Yellow</label>
+        <label><input type="checkbox" value="Orange"> Orange</label>
+        <label><input type="checkbox" value="Red"> Red</label>
+        <label><input type="checkbox" value="Brown"> Brown</label>
+        <label><input type="checkbox" value="Green"> Green</label>
+        <label><input type="checkbox" value="Blue"> Blue</label>
+        <label><input type="checkbox" value="Purple"> Purple</label>
+        <label><input type="checkbox" value="Pink"> Pink</label>
+      </div>
+      <div id="colorOptions" class="modal-grid">
+        <div class="modal-column" id="color-col1">
+          <h4>Uncoated/Clear/White/Beige</h4>
+        </div>
+        <div class="modal-column" id="color-col2">
+          <h4>Yellow/Orange</h4>
+        </div>
+        <div class="modal-column" id="color-col3">
+          <h4>Red/Brown</h4>
+        </div>
+        <div class="modal-column" id="color-col4">
+          <h4>Green/Blue/Purple/Pink/Carob</h4>
+        </div>
+        <div class="modal-column" id="color-col5">
+          <h4>Others</h4>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button primary" onclick="applyColorSelection()">Apply</button>
+      </div>
+    </div>
+  </div>
 
-            window.removeClaimSearch = function(button) {
-                $(button).closest('.claim-search-row').remove();
-            };
+  <!-- ---------- Unit Size 모달 (원본 디자인 유지) ---------- -->
+  <div id="unitSizeModal" class="modal">
+    <div class="modal-content">
+      <h2>Select Unit Size</h2>
+      <div id="unitSizeOptions" class="modal-grid">
+        <div class="modal-column" id="unit-col1">
+          <h4>Hard Capsule</h4>
+        </div>
+        <div class="modal-column" id="unit-col2">
+          <h4>Tablet</h4>
+        </div>
+        <div class="modal-column" id="unit-col3">
+          <h4>Softgel (Oval/Twsit)</h4>
+        </div>
+        <div class="modal-column" id="unit-col4">
+          <h4>Softgel (Oblong)</h4>
+        </div>
+        <div class="modal-column" id="unit-col5">
+          <h4>Others</h4>
+        </div>
+      </div>
+      <div class="modal-footer">
+         <button type="button" class="modal-button primary" onclick="applyUnitSizeSelection()">Apply</button>
+      </div>
+    </div>
+  </div>
 
-            window.submitCompareForm = function() {
-                document.getElementById('compare-form').submit();
-            };
+  <!-- ---------- Add Vitamins & Minerals 모달 (원본 디자인 유지) ---------- -->
+  <div id="vitaminsMineralsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add Vitamins &amp; Minerals</h2>
+      </div>
+      <div class="modal-body">
+        <div class="vitamins-minerals-list">
+          <div class="vitamin-column" style="width:48%; display: flex; flex-direction: column; gap: 8px;">
+            <h4>Vitamins</h4>
+          </div>
+          <div class="mineral-column" style="width:48%; display: flex; flex-direction: column; gap: 8px;">
+            <h4>Minerals</h4>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-button primary" onclick="closeVitaminsMineralsModal()">Close</button>
+        <button type="button" class="modal-button primary" onclick="addSelectedVitaminsMinerals()">Add Selected</button>
+      </div>
+    </div>
+  </div>
 
-            // Vitamins & Minerals Modal Functions
-            window.openVitaminsMineralsModal = function() {
-                var modal = document.getElementById('vitaminsMineralsModal');
-                if (!modal) {
-                    console.error('VitaminsMineralsModal not found');
-                    return;
-                }
-                var list = modal.querySelector('.vitamins-minerals-list');
-                if (!list) {
-                    console.error('vitamins-minerals-list not found');
-                    return;
-                }
-                list.innerHTML = ''; // Clear previous list
+  <!-- ---------- Load Specifications 모달 (원본 디자인 유지) ---------- -->
+  <div id="loadSpecsModal" class="modal">
+    <div class="modal-content">
+      <h2>Load Specifications</h2>
+      <div class="button-row">
+        <input type="text" id="loadSpecsItemCode" placeholder="Enter Item Code" style="flex:1; height:40px; font-size:16px; padding:5px;">
+        <button type="button" class="modal-button primary" style="height:40px;" onclick="applyLoadSpecifications()">Apply</button>
+        <button type="button" class="modal-button primary" style="height:40px;" onclick="closeLoadSpecificationsModal()">Close</button>
+      </div>
+    </div>
+  </div>
 
-                var vitamins = [
-                    'Vit A', 'Beta-Carotene', 'Vit D3', 'Vit E', 'Vit K1', 'Vit K2', 'Vit B1', 'Vit B2', 'Vit B3',
-                    'Vit B5', 'Vit B6', 'Vit B12', 'Vit C', 'Vit B9', 'Biotin'
-                ];
-                var minerals = [
-                    'Calcium', 'Magnesium', 'Iron', 'Zinc', 'Copper', 'Selenium', 'Iodine', 'Manganese',
-                    'Molybdenum', 'Potassium', 'Chromium'
-                ];
+  <script>
+    /* 자동완성: maxShowItems 옵션 제거하여 결과 갯수 제한 없이 모두 표시 */
+    function initAutocomplete(inputId, field, minLength = 1) {
+      var $elem = $('#' + inputId);
+      $elem.autocomplete({
+        source: function(request, response) {
+          $.getJSON("/autocomplete", { query: request.term, field: field }, function(data) {
+            response($.map(data, function(item) {
+              return { label: item, value: item };
+            }));
+          });
+        },
+        minLength: minLength,
+        select: function(event, ui) {
+          $elem.val(ui.item.value);
+          return false;
+        }
+      });
+      var acInstance = $elem.autocomplete("instance") || $elem.data("ui-autocomplete");
+      if (acInstance) {
+        acInstance._renderItem = function(ul, item) {
+          return $("<li>").append("<div>" + item.label + "</div>").appendTo(ul);
+        };
+      }
+      $elem.on('click', function() { $elem.autocomplete("search", ""); });
+    }
+    initAutocomplete('item_code', 'item_code');
+    initAutocomplete('item_name', 'item_name');
+    initAutocomplete('description', 'description');
 
-                var leftColumn = document.createElement('div');
-                leftColumn.className = 'vitamin-column';
-                var rightColumn = document.createElement('div');
-                rightColumn.className = 'mineral-column';
+    /* Claim 자동완성: maxShowItems 옵션 제거 */
+    function initClaimDescriptionAutocomplete(element, mainClaimValue) {
+      $(element).autocomplete({
+        source: function(request, response) {
+          $.getJSON("/autocomplete", { field: 'claim_description', main_claim: mainClaimValue, query: request.term }, function(data) {
+            response($.map(data, function(item) {
+              return { label: item, value: item };
+            }));
+          });
+        },
+        minLength: 0,
+        select: function(event, ui) { $(this).val(ui.item.value); }
+      }).focus(function() { $(this).autocomplete("search", ""); });
+      var acInstance = $(element).autocomplete("instance") || $(element).data("ui-autocomplete");
+      if (acInstance) {
+        acInstance._renderItem = function(ul, item) {
+          return $("<li>").append("<div>" + item.label + "</div>").appendTo(ul);
+        };
+      }
+    }
+    function initClaimRow(claimRow) {
+      var $mainClaimInput = $(claimRow).find('.claim-main-input');
+      var $claimDescriptionInput = $(claimRow).find('.claim-description-input');
+      $mainClaimInput.autocomplete({
+        source: function(request, response) {
+          $.getJSON("/autocomplete", { query: request.term, field: 'claim_main' }, function(data) {
+            response($.map(data, function(item) {
+              return { label: item, value: item };
+            }));
+          });
+        },
+        minLength: 1,
+        select: function(event, ui) {
+          $mainClaimInput.val(ui.item.value);
+          initClaimDescriptionAutocomplete($claimDescriptionInput, ui.item.value);
+        }
+      });
+      var acInstanceMain = $mainClaimInput.autocomplete("instance") || $mainClaimInput.data("ui-autocomplete");
+      if (acInstanceMain) {
+        acInstanceMain._renderItem = function(ul, item) {
+          return $("<li>").append("<div>" + item.label + "</div>").appendTo(ul);
+        };
+      }
+      $mainClaimInput.on('change', function() {
+        initClaimDescriptionAutocomplete($claimDescriptionInput, $(this).val());
+      });
+      initClaimDescriptionAutocomplete($claimDescriptionInput, $mainClaimInput.val());
+    }
+    $('.claim-search-row').each(function() { initClaimRow(this); });
+    window.claimSearchRowTemplate = `
+      <div class="claim-search-row">
+        <input type="text" name="claim_main[]" class="claim-main-input" placeholder="Claim Main">
+        <input type="text" name="claim_description[]" class="claim-description-input" placeholder="Claim Description">
+        <input type="number" name="claim_concentration[]" step="0.0001" placeholder="Claim Concentration">
+        <select name="claim_unit[]">
+          <option value="">All Units</option>
+          <option value="mg">mg</option>
+          <option value="mcg">mcg</option>
+          <option value="IU">IU</option>
+          <option value="mgaTE">mgaTE</option>
+          <option value="mgRAE">mgRAE</option>
+          <option value="mcgRAE">mcgRAE</option>
+          <option value="mgNE">mgNE</option>
+          <option value="mcgNE">mcgNE</option>
+          <option value="mgDFE">mgDFE</option>
+          <option value="mcgDFE">mcgDFE</option>
+          <option value="B cfu">B cfu</option>
+        </select>
+        <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)">
+        <select name="claim_filter_type[]">
+          <option value="include" selected>Include(포함)</option>
+          <option value="exclude">Exclude(제외)</option>
+        </select>
+        <button type="button" class="remove-claim-search" onclick="removeClaimSearch(this)">Remove</button>
+      </div>
+    `;
+    window.addClaimSearch = function(count = 5, prepend = false) {
+      const container = document.getElementById('claim-search-container');
+      for (let i = 0; i < count; i++) {
+        const newDiv = document.createElement('div');
+        newDiv.innerHTML = window.claimSearchRowTemplate;
+        if (prepend) {
+          container.insertBefore(newDiv, container.firstChild);
+        } else {
+          container.appendChild(newDiv);
+        }
+        initClaimRow(newDiv);
+      }
+    };
+    window.removeClaimSearch = function(button) {
+      $(button).closest('.claim-search-row').remove();
+    };
+    window.submitCompareForm = function() {
+      document.getElementById('compare-form').submit();
+    };
 
-                // 선택된 순서를 저장할 배열 초기화
-                window.selectedVitaminsMineralsOrder = [];
+    /* Modal Functions (원본 유지) */
+    window.openVitaminsMineralsModal = function() {
+      var modal = document.getElementById('vitaminsMineralsModal');
+      if (!modal) { console.error('VitaminsMineralsModal not found'); return; }
+      var list = modal.querySelector('.vitamins-minerals-list');
+      if (!list) { console.error('vitamins-minerals-list not found'); return; }
+      list.innerHTML = '';
+      var leftColumn = document.createElement('div');
+      leftColumn.className = 'vitamin-column';
+      leftColumn.innerHTML = '<h4>Vitamins</h4>';
+      var rightColumn = document.createElement('div');
+      rightColumn.className = 'mineral-column';
+      rightColumn.innerHTML = '<h4>Minerals</h4>';
+      window.selectedVitaminsMineralsOrder = [];
+      var vitamins = ['Vit A','Beta-Carotene','Vit D3','Vit E','Vit K1','Vit K2','Vit B1','Vit B2','Vit B3','Vit B5','Vit B6','Vit B12','Vit C','Vit B9','Biotin'];
+      var minerals = ['Calcium','Magnesium','Iron','Zinc','Copper','Selenium','Iodine','Manganese','Molybdenum','Potassium','Chromium'];
+      vitamins.forEach(function(item) { createCheckbox(item, leftColumn); });
+      minerals.forEach(function(item) { createCheckbox(item, rightColumn); });
+      list.appendChild(leftColumn);
+      list.appendChild(rightColumn);
+      modal.style.display = "block";
+    };
+    function createCheckbox(item, container) {
+      var label = document.createElement('label');
+      var checkbox = document.createElement('input');
+      checkbox.type = "checkbox";
+      checkbox.name = "vitamins_minerals";
+      checkbox.value = item;
+      checkbox.addEventListener('click', function() {
+        if (this.checked) {
+          window.selectedVitaminsMineralsOrder.push(this.value);
+        } else {
+          var index = window.selectedVitaminsMineralsOrder.indexOf(this.value);
+          if (index > -1) {
+            window.selectedVitaminsMineralsOrder.splice(index, 1);
+          }
+        }
+      });
+      label.appendChild(checkbox);
+      label.appendChild(document.createTextNode(' ' + item));
+      container.appendChild(label);
+    }
+    window.closeVitaminsMineralsModal = function() {
+      var modal = document.getElementById('vitaminsMineralsModal');
+      modal.style.display = "none";
+    };
+    window.addSelectedVitaminsMinerals = function() {
+      window.selectedVitaminsMineralsOrder.forEach(function(item) {
+        addClaimSearch(1, true);
+        var newClaimRow = $('.claim-search-row').first();
+        var $mainClaimInput = newClaimRow.find('.claim-main-input');
+        var $claimDescriptionInput = newClaimRow.find('.claim-description-input');
+        $mainClaimInput.val(item);
+        initClaimDescriptionAutocomplete($claimDescriptionInput, item);
+      });
+      closeVitaminsMineralsModal();
+      window.selectedVitaminsMineralsOrder = [];
+    };
+    window.openLoadSpecificationsModal = function() {
+      document.getElementById('loadSpecsModal').style.display = 'block';
+    };
+    window.closeLoadSpecificationsModal = function() {
+      document.getElementById('loadSpecsModal').style.display = 'none';
+    };
+    window.applyLoadSpecifications = function() {
+      let itemCode = document.getElementById('loadSpecsItemCode').value;
+      if (!itemCode.trim()) { alert("Please enter an Item Code"); return; }
+      $.getJSON('/get_product_details', { item_code: itemCode }, function(data) {
+        if (data.success) {
+          data.claims.forEach(function(claim) {
+            addClaimSearch(1, true);
+            let newRow = $('.claim-search-row').first();
+            newRow.find('.claim-main-input').val(claim.claim_main);
+            newRow.find('.claim-description-input').val(claim.claim_description);
+            newRow.find('input[name="claim_concentration[]"]').val(claim.claim_concentration);
+            newRow.find('select[name="claim_unit[]"]').val(claim.claim_unit);
+          });
+        } else {
+          alert("Item code not found.");
+        }
+      });
+      closeLoadSpecificationsModal();
+    };
 
-                vitamins.forEach(function(item) {
-                    createCheckbox(item, leftColumn);
-                });
+    // Unit Size Modal Functions
+    document.getElementById('unit_size_btn').addEventListener('click', openUnitSizeModal);
+    function openUnitSizeModal() {
+      document.getElementById('unitSizeModal').style.display = 'block';
+      let options = {{ unit_size_options | tojson }};
+      ['unit-col1','unit-col2','unit-col3','unit-col4','unit-col5'].forEach(function(id) {
+        const col = document.getElementById(id);
+        col.innerHTML = '<h4>' + col.querySelector('h4').textContent + '</h4>';
+      });
+      let othersArr = [];
+      options.forEach(function(opt) {
+        let lower = opt.trim().toLowerCase();
+        if (lower === '') return;
+        let colId = 'unit-col5';
+        if (opt.startsWith('#')) {
+          colId = 'unit-col1';
+        } else if (lower.includes('mm')) {
+          colId = 'unit-col2';
+        } else if (lower.includes('oval') || lower.includes('twsit') || lower.includes('twist')) {
+          colId = 'unit-col3';
+        } else if (lower.includes('oblong')) {
+          colId = 'unit-col4';
+        }
+        if (opt === 'ETC' || opt === '빈칸') return;
+        if (colId === 'unit-col5') {
+          othersArr.push(opt);
+        } else {
+          let checkbox = `<label><input type="checkbox" value="${opt}"> ${opt}</label>`;
+          document.getElementById(colId).innerHTML += checkbox;
+        }
+      });
+      let uniqueOthers = [...new Set(othersArr)].filter(v => v !== '').sort();
+      uniqueOthers.forEach(function(opt) {
+        let checkbox = `<label><input type="checkbox" value="${opt}"> ${opt}</label>`;
+        document.getElementById('unit-col5').innerHTML += checkbox;
+      });
+    }
+    function closeUnitSizeModal() {
+      document.getElementById('unitSizeModal').style.display = 'none';
+    }
+    function applyUnitSizeSelection() {
+      let selected = [];
+      document.querySelectorAll('#unitSizeOptions input[type="checkbox"]:checked').forEach(function(el) {
+        selected.push(el.value);
+      });
+      document.getElementById('unit_size_hidden').value = selected.join(',');
+      document.getElementById('unit_size_btn').textContent = selected.length ? (selected.length + " Size Selected") : "Select Unit Size";
+      closeUnitSizeModal();
+    }
 
-                minerals.forEach(function(item) {
-                    createCheckbox(item, rightColumn);
-                });
+    // Color Modal Functions
+    document.getElementById('color_btn').addEventListener('click', openColorModal);
+    function openColorModal() {
+      document.getElementById('colorModal').style.display = 'block';
+      let options = {{ color_options | tojson }};
+      ['color-col1','color-col2','color-col3','color-col4','color-col5'].forEach(function(id) {
+        const col = document.getElementById(id);
+        col.innerHTML = '<h4>' + col.querySelector('h4').textContent + '</h4>';
+      });
+      document.getElementById('colorHorizontal').innerHTML = 
+        '<label><input type="checkbox" value="Uncoated"> Uncoated</label>' +
+        '<label><input type="checkbox" value="Clear"> Clear</label>' +
+        '<label><input type="checkbox" value="White"> White</label>' +
+        '<label><input type="checkbox" value="Beige"> Beige</label>' +
+        '<label><input type="checkbox" value="Yellow"> Yellow</label>' +
+        '<label><input type="checkbox" value="Orange"> Orange</label>' +
+        '<label><input type="checkbox" value="Red"> Red</label>' +
+        '<label><input type="checkbox" value="Brown"> Brown</label>' +
+        '<label><input type="checkbox" value="Green"> Green</label>' +
+        '<label><input type="checkbox" value="Blue"> Blue</label>' +
+        '<label><input type="checkbox" value="Purple"> Purple</label>' +
+        '<label><input type="checkbox" value="Pink"> Pink</label>';
+      let group1 = [], group2 = [], group3 = [], group4 = [], group5 = [];
+      options.forEach(function(opt) {
+        let trimmed = opt.trim();
+        if (trimmed === '') return;
+        let lower = trimmed.toLowerCase();
+        if (lower.includes('uncoated') || lower.includes('clear') || lower.includes('white') || lower.includes('beige')) {
+          group1.push(trimmed);
+        } else if (lower.includes('yellow') || lower.includes('orange')) {
+          group2.push(trimmed);
+        } else if (lower.includes('red') || lower.includes('brown')) {
+          group3.push(trimmed);
+        } else if (lower.includes('green') || lower.includes('blue') || lower.includes('purple') || lower.includes('pink') || lower.includes('carob')) {
+          group4.push(trimmed);
+        } else {
+          group5.push(trimmed);
+        }
+      });
+      group1.sort();
+      group2.sort();
+      group3.sort();
+      group4.sort();
+      group5.sort();
+      document.getElementById('color-col1').innerHTML += group1.map(opt => `<label><input type="checkbox" value="${opt}"> ${opt}</label>`).join('');
+      document.getElementById('color-col2').innerHTML += group2.map(opt => `<label><input type="checkbox" value="${opt}"> ${opt}</label>`).join('');
+      document.getElementById('color-col3').innerHTML += group3.map(opt => `<label><input type="checkbox" value="${opt}"> ${opt}</label>`).join('');
+      document.getElementById('color-col4').innerHTML += group4.map(opt => `<label><input type="checkbox" value="${opt}"> ${opt}</label>`).join('');
+      document.getElementById('color-col5').innerHTML += group5.map(opt => `<label><input type="checkbox" value="${opt}"> ${opt}</label>`).join('');
+    }
+    function closeColorModal() {
+      document.getElementById('colorModal').style.display = 'none';
+    }
+    function applyColorSelection() {
+      let selected = [];
+      document.querySelectorAll('#colorOptions input[type="checkbox"]:checked').forEach(function(el) {
+        selected.push(el.value);
+      });
+      document.querySelectorAll('#colorHorizontal input[type="checkbox"]:checked').forEach(function(el) {
+        selected.push(el.value);
+      });
+      document.getElementById('color_hidden').value = selected.join(',');
+      document.getElementById('color_btn').textContent = selected.length ? (selected.length + " Color selected") : "Select Color";
+      closeColorModal();
+    }
 
-                list.appendChild(leftColumn);
-                list.appendChild(rightColumn);
-
-                modal.style.display = "block";
-            };
-
-            function createCheckbox(item, container) {
-                var label = document.createElement('label');
-                var checkbox = document.createElement('input');
-                checkbox.type = "checkbox";
-                checkbox.name = "vitamins_minerals";
-                checkbox.value = item;
-
-                // 체크박스 클릭 이벤트 리스너 추가
-                checkbox.addEventListener('click', function() {
-                    if (this.checked) {
-                        // 체크되었을 때 순서대로 배열에 추가
-                        window.selectedVitaminsMineralsOrder.push(this.value);
-                    } else {
-                        // 체크 해제되었을 때 배열에서 제거
-                        var index = window.selectedVitaminsMineralsOrder.indexOf(this.value);
-                        if (index > -1) {
-                            window.selectedVitaminsMineralsOrder.splice(index, 1);
-                        }
-                    }
-                });
-
-                label.appendChild(checkbox);
-                label.appendChild(document.createTextNode(' ' + item));
-                container.appendChild(label);
-            }
-
-            window.closeVitaminsMineralsModal = function() {
-                var modal = document.getElementById('vitaminsMineralsModal');
-                modal.style.display = "none";
-            };
-
-            // Add Selected Vitamins and Minerals
-            window.addSelectedVitaminsMinerals = function() {
-                // 저장된 순서대로 클레임 추가
-                window.selectedVitaminsMineralsOrder.forEach(function(item) {
-                    addClaimSearch(1); // 하나의 행씩 추가
-                    // Get the last claim row and set the values
-                    var newClaimRow = $('.claim-search-row').last();
-                    var mainClaimInput = newClaimRow.find('.claim-main-input');
-                    var claimDescriptionInput = newClaimRow.find('.claim-description-input');
-                    mainClaimInput.val(item); // 메인 클레임 입력
-                    initClaimDescriptionAutocomplete(claimDescriptionInput, item); // **필터링 적용**
-                });
-
-                closeVitaminsMineralsModal(); // Close the modal
-
-                // Reset the array
-                window.selectedVitaminsMineralsOrder = [];
-            };
-
-            // Close the modal if the user clicks outside of it
-            window.onclick = function(event) {
-                var modal = document.getElementById('vitaminsMineralsModal');
-                if (event.target == modal) {
-                    closeVitaminsMineralsModal();
-                }
-            }
-        });
-    </script>
-
+    // 모달 영역 밖 클릭 시 닫기
+    window.onclick = function(event) {
+      document.querySelectorAll('.modal').forEach(function(modal) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      });
+    };
+  </script>
 </body>
-
 </html>

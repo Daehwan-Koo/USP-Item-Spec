@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Guide (ENG)</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f8ff; 
+      line-height: 1.8;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 { 
+      color: #003366; 
+      font-size: 28px;
+      border-bottom: 2px solid #003366;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #0066cc;
+      font-size: 22px;
+      margin-top: 30px;
+    }
+    h3 {
+      color: #3399ff;
+      font-size: 18px;
+      margin-top: 20px;
+    }
+    p { 
+      white-space: pre-wrap;
+      margin-bottom: 15px;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+    .highlight {
+      background-color: #e6f3ff;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>USP Product Specification List - User Guide (ENG)</h1>
+    
+    <p>This application manages the basic information and claim data of USP products, providing product comparison and search functionalities.</p>
+
+    <h2>1. Login &amp; User Roles</h2>
+    <h3>Login Page </h3>
+    <p>Users can log in by entering their password when using the application for the first time.</p>
+    <p>User Roles:</p>
+    <ul>
+      <li><strong>Master:</strong> Access to all features.</li>
+      <li><strong>Admin (Administrator):</strong> Can add, edit, delete, search, compare products, and manage certain database functions.</li>
+      <li><strong>Viewer (Read-only):</strong> Can view product lists and details but cannot modify or delete data.</li>
+    </ul>
+
+    <h2>2. Main Dashboard – Product List &amp; Search Function</h2>
+    <h3>Product List Table</h3>
+    <p>The main page displays the list of USP products. Each row contains the following information:</p>
+    <ul>
+      <li>Product Type: Product formulation details.</li>
+      <li>Item Code, Item Name, Description, Unit Size, Color, Weight (mg): Basic product information.</li>
+      <li>Info: Hovering over the row reveals claim information and remarks.</li>
+      <li>Actions: 'View,' 'Edit,' and 'Delete' buttons allow users to view, modify, or remove products.</li>
+      <li>Compare: Selecting checkboxes of products and clicking the 'Compare' button navigates to the comparison page.</li>
+    </ul>
+
+    <h3>Search Function</h3>
+    <p>Users can filter products using various fields (e.g., Item Code, Name, Description, Weight, etc.).</p>
+    <p>Clicking "Select Unit Size" or "Select Color" opens selection options.</p>
+    <p>A claim search field enables filtering based on claim-related conditions.</p>
+
+    <h2>3. Adding a Product</h2>
+    <h3>Add Product Page</h3>
+    <p>Accessible only to Admin and Master users.</p>
+    <p>Users should follow the product information form when adding a new product.</p>
+
+    <h2>4. Editing a Product</h2>
+    <h3>Edit Product Page</h3>
+    <p>Accessible only to Admin and Master users.</p>
+    <p>Users can modify existing product details and claim data.</p>
+    <p>After making the necessary changes, click the "Save" button to apply the updates.</p>
+
+    <h2>5. Viewing Product Details</h2>
+    <h3>View Button - Product Detail Page</h3>
+    <p>Displays basic product information and claim data.</p>
+    <p>The table format includes various product details such as Item Code, Name, Description, Unit, Color, Weight, Capacity, Remarks, and Claim Information.</p>
+
+    <h2>6. Product Search &amp; Filtering</h2>
+    <h3>Search Form Usage (Search Area on Main Page)</h3>
+    <p>Users can search products using various fields (e.g., Item Code, Item Name, Description, Weight, etc.).</p>
+    <div class="highlight">
+      <p><strong>Numeric Filters:</strong><br>
+      When entering Weight, users can specify a "Weight Tolerance (%)" to find products within a tolerance range (default: 10%).</p>
+    </div>
+    <p><strong>Unit Size &amp; Color Selection:</strong><br>
+    Clicking "Select Unit Size" or "Select Color" opens selection windows.</p>
+    <p><strong>Claim Search:</strong><br>
+    Users can add multiple claim search fields and specify conditions for each (e.g., main claim, description, concentration, unit, tolerance, and inclusion/exclusion criteria).<br>
+    Clicking "Add Claim Search" adds a new row for claims.</p>
+    <p>Clicking "Add Vitamins &amp; Minerals" opens a window where users can select components to add to the claim search.</p>
+    <p><strong>Load Specifications:</strong><br>
+    Clicking the "Load Specifications" button opens a window where users can enter an Item Code to automatically load claim information into the search fields.</p>
+    <p><strong>Search Execution:</strong><br>
+    Clicking the "Search" button updates the product list based on the applied filters, while the "Clear" button resets search conditions.</p>
+    <p>A "Re-search" function allows users to refine results within a previous search.</p>
+
+    <h2>7. Product Comparison</h2>
+    <h3>Comparison Function (Compare)</h3>
+    <p>Users can select checkboxes for products on the main page and click the 'Compare' button to navigate to the comparison page.</p>
+    <p>At the top of the comparison page, entering an Item Code and clicking 'Add' adds the product to the comparison table.</p>
+    <p>Comparison Page Includes:</p>
+    <ul>
+      <li>Basic Information Table: Displays each product's Item Code, Unit Size, Color, Weight, Dosage, and Remarks.</li>
+      <li>Claim Table: Compares claim data with results marked in different colors (Black: Test O, Red: Test X or Input).</li>
+    </ul>
+    <p>Deleting Products: The "Delete" button allows users to remove products from the comparison list.</p>
+
+    <h2>8. Troubleshooting &amp; Additional Notes</h2>
+    <h3>Further Assistance</h3>
+    <p>If issues persist or additional support is needed, contact the administrator (development team).</p>
+  </div>
+</body>
+</html>

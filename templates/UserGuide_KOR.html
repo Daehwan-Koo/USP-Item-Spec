@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Guide (KOR)</title>
+  <style>
+    body { 
+      font-family: 'Nanum Gothic', Arial, sans-serif; 
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f8ff; 
+      line-height: 1.8;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 { 
+      color: #003366; 
+      font-size: 28px;
+      border-bottom: 2px solid #003366;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #0066cc;
+      font-size: 22px;
+      margin-top: 30px;
+    }
+    h3 {
+      color: #3399ff;
+      font-size: 18px;
+      margin-top: 20px;
+    }
+    p { 
+      white-space: pre-wrap;
+      margin-bottom: 15px;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+    .highlight {
+      background-color: #e6f3ff;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>USP 제품 스펙 리스트– 사용자 도움말 (KOR)</h1>
+    
+    <p>이 애플리케이션은 USP 제품의 기본 정보와 클레임 데이터를 관리하고, 제품 간 비교 및 검색기능을 제공합니다.</p>
+
+    <h2>1. 로그인 및 사용자 역할</h2>
+    <h3>로그인 페이지 </h3>
+    <p>애플리케이션을 처음 사용할 때는 비밀번호를 입력하여 로그인할 수 있습니다.</p>
+    <ul>
+      <li><strong>Master:</strong> 모든 기능</li>
+      <li><strong>Admin (관리자):</strong> 제품 추가, 수정, 삭제, 검색, 비교 및 일부 DB 관리 기능</li>
+      <li><strong>Viewer (열람 전용):</strong> 제품 목록과 상세 정보를 조회할 수 있으며, 데이터 수정이나 삭제 권한은 없습니다.</li>
+    </ul>
+
+    <h2>2. 메인 대시보드 – 제품 목록 및 검색기능</h2>
+    <h3>제품 목록 테이블</h3>
+    <p>메인 페이지에서는 USP 제품의 목록이 나타납니다. 각 행에는 다음과 같은 정보가 표시됩니다:</p>
+    <ul>
+      <li>제품 유형: 제품의 제형 정보</li>
+      <li>Item Code, Item Name, Description, Unit Size, Color, Weight (mg): 기본 제품 정보</li>
+      <li>Info: 마우스를 올리면 클레임 정보 및 리마크 내용을 확인할 수 있습니다.</li>
+      <li>Actions: 'View', 'Edit', 'Delete' 버튼을 통해 제품 상세 조회, 수정, 삭제가 가능합니다.</li>
+      <li>Compare: 비교할 제품들의 체크박스를 선택하고 Compare 버튼을 누르면 비교페이지로 이동합니다.</li>
+    </ul>
+
+    <h3>검색 기능</h3>
+    <p>제품 검색 폼을 통해 다양한 필터(예: Item Code, Name, Description, Weight 등)를 이용해 원하는 제품을 검색할 수 있습니다.</p>
+    <p>"Select Unit Size" 및 "Select Color" 버튼을 누르면 원하는 옵션을 선택할 수 있습니다.</p>
+    <p>클레임 검색 필드를 추가하여 제품의 클레임 관련 조건으로 필터링할 수 있습니다.</p>
+
+    <h2>3. 제품 추가하기 (Add Product)</h2>
+    <h3>제품 추가 페이지 (Add)</h3>
+    <p>관리자 및 마스터 권한 사용자만 접근할 수 있습니다.</p>
+    <p>제품정보 추가 양식은 제품정보 양식표에 따라 추가하시기 바랍니다.</p>
+
+    <h2>4. 제품 수정하기 (Edit)</h2>
+    <h3>제품 수정 페이지 (Edit)</h3>
+    <p>관리자 및 마스터 사용자만 접근 가능합니다.</p>
+    <p>기존 제품의 정보와 클레임 데이터를 수정할 수 있습니다.</p>
+    <p>원하는 정보를 수정한 후 "Save" 버튼을 클릭하여 변경 사항을 저장합니다.</p>
+
+    <h2>5. 제품 상세 보기</h2>
+    <h3>View 버튼 - 제품 상세 페이지</h3>
+    <p>제품의 기본 정보와 클레임 데이터가 표시됩니다.</p>
+    <p>표 형식으로 제품의 각 항목(아이템 코드, 이름, 설명, 단위, 색상, 무게, 용량, 비고, 클레임정보 등)을 확인할 수 있습니다.</p>
+
+    <h2>6. 제품 검색 및 필터링</h2>
+    <h3>검색 폼 사용법 (메인 페이지 내 검색 영역)</h3>
+    <p>다양한 필드(예: Item Code, Item Name, Description, Weight 등)로 제품을 검색할 수 있습니다.</p>
+    <div class="highlight">
+      <p><strong>수치 필터:</strong><br>
+      Weight 입력 시 "Weight Tolerance (%)"를 함께 지정하여 허용 오차 범위 내의 제품을 검색할 수 있으며, 기본 10% 범위로 설정되어 있습니다.</p>
+    </div>
+    <p><strong>Unit Size 및 Color 선택:</strong><br>
+    "Select Unit Size" 버튼과 "Select Color" 버튼을 누르면 각각 창이 열려, 원하는 옵션을 선택 후 적용할 수 있습니다.</p>
+    <p><strong>클레임 검색:</strong><br>
+    여러 개의 클레임 검색 필드를 추가할 수 있으며, 각 행에서 주요 주장, 설명, 농도, 단위, 허용 오차, 그리고 "Include(포함)" 또는 "Exclude(제외)" 옵션을 지정할 수 있습니다.<br>
+    "Add Claim Search" 버튼을 통해 필드 행을 추가합니다.</p>
+    <p>Add Vitamins &amp; Minerals 버튼을 누르면 원하는 성분을 체크하여 클레임 검색창에 추가할 수 있으며, 체크한 순서대로 추가됩니다.</p>
+    <p><strong>Load Specifications:</strong><br>
+    "Load Specifications" 버튼을 클릭하면 창이 열리고, Item Code를 입력하면 해당 제품의 클레임 정보가 자동으로 검색 필드에 추가됩니다.</p>
+    <p>검색 후 "Search" 버튼을 누르면 필터 조건에 맞는 제품 목록이 업데이트되며, "Clear" 버튼을 누르면 검색 조건이 초기화됩니다.</p>
+    <p>서치버튼 옆에 결과 내 재검색(Re-search) 기능이 있어, 체크 후 검색하면 이전 검색 결과 내에서 다시 검색할 수 있습니다.</p>
+
+    <h2>7. 제품 비교</h2>
+    <h3>비교 기능 (Compare)</h3>
+    <p>메인 페이지에서 각 제품 우측의 "Compare" 체크박스들을 선택하고 Compare 버튼을 누르면 제품 비교페이지로 이동하여, 코드별 기본정보와 클레임 데이터를 비교할 수 있습니다.</p>
+    <p>비교페이지 상단에 Item Code를 입력하고 Add 버튼을 누르면 비교표에 해당 제품이 추가됩니다.</p>
+    <p>비교 페이지에서는 두 개의 표로 제품을 나란히 비교할 수 있습니다.</p>
+    <ul>
+      <li>기본 정보 테이블: 각 제품의 Item Code, Unit Size, Color, Weight, Dosage, Remark 정보를 확인할 수 있습니다.</li>
+      <li>클레임 테이블: 각 제품의 클레임 데이터를 비교하여, 테스트 결과에 따라 색상(검정: Test O, 빨강: Test X 혹은 Input)으로 표시됩니다.</li>
+    </ul>
+    <p>제품 삭제: 비교 목록에서 "Delete" 버튼을 이용하여 제품을 제거할 수 있습니다.</p>
+
+    <h2>8. 문제 해결 및 참고사항</h2>
+    <h3>추가 문의</h3>
+    <p>문제가 지속되거나 추가적인 지원이 필요할 경우, 관리자(개발팀)에게 문의하세요.</p>
+  </div>
+</body>
+</html>

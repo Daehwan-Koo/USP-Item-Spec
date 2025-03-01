@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Product Comparison</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -21,17 +22,21 @@
        - gap으로 요소 간 간격 조절 */
     .header-container {
       display: flex;
-      align-items: baseline;  /* 세로 가운데 정렬 */
-      gap: 2rem;            /* 요소들 사이 가로 간격 */
+      align-items: baseline;
+      /* 세로 가운데 정렬 */
+      gap: 2rem;
+      /* 요소들 사이 가로 간격 */
       margin-bottom: 10px;
     }
+
     /* h1(타이틀)은 기본 여백을 제거하고, 
        텍스트를 수직으로 가운데 정렬하기 위해 display: flex 적용 */
     .header-container h1 {
       margin: 0;
       display: flex;
       align-items: center;
-      line-height: 1.2; /* 글자가 너무 커서 높이 튀어나오지 않도록 조정 */
+      line-height: 1.2;
+      /* 글자가 너무 커서 높이 튀어나오지 않도록 조정 */
     }
 
     /* Back 버튼, 입력창, Add 버튼 모두 높이 동일, 텍스트 수직/수평 중앙 정렬 */
@@ -50,12 +55,15 @@
     .return-btn {
       background-color: #003366;
       color: #fff;
-      padding: 0 15px;        /* 좌우 여백 */
+      padding: 0 15px;
+      /* 좌우 여백 */
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      text-decoration: none;  /* a 태그 밑줄 제거 */
+      text-decoration: none;
+      /* a 태그 밑줄 제거 */
     }
+
     .return-btn:hover {
       background-color: #001b36;
     }
@@ -79,6 +87,7 @@
       border-radius: 4px;
       cursor: pointer;
     }
+
     #add-product-btn:hover {
       background-color: #001b36;
     }
@@ -89,6 +98,7 @@
       width: 100%;
       margin-bottom: 20px;
     }
+
     /* 테이블 스타일: width는 auto, 
        최소 폭은 (제품수+1)*22ch (왼쪽 열 + 제품 열 수) */
     table {
@@ -97,8 +107,10 @@
       table-layout: fixed;
       min-width: calc((var(--product-count) + 1) * 15ch);
     }
+
     /* 모든 셀은 텍스트 줄바꿈 적용 */
-    th, td {
+    th,
+    td {
       border: 1px solid #b0b0b0;
       background-color: #dcdde3;
       padding: 8px;
@@ -106,11 +118,13 @@
       white-space: normal;
       overflow-wrap: break-word;
     }
+
     th {
       background-color: #003366;
       color: white;
       font-weight: bold;
     }
+
     /* 좌측(속성) 열: 15ch 고정 (헤더와 바디 모두) */
     .attribute {
       font-weight: bold;
@@ -120,12 +134,14 @@
       max-width: 22ch;
       word-break: break-word;
     }
+
     /* 제품 열: 좌측 열 제외, 균등하게 15ch 고정 */
     th:not(.attribute),
     td:not(.attribute) {
       width: 22ch;
       min-width: 22ch;
     }
+
     /* 긴 텍스트를 갖는 제품 이름 셀 */
     th.product-name {
       overflow-wrap: break-word;
@@ -134,32 +150,41 @@
     .test-o {
       color: black;
     }
+
     .test-x-or-input {
       color: red;
     }
+
     /* 클레임 디스크립션 텍스트는 약간 작은 폰트 */
     .claim-desc {
       font-size: 0.8em;
     }
+
     .claim-legend {
       font-size: 75%;
       color: black;
       margin-left: 30px;
     }
+
     .red-text {
       color: red;
     }
-    h1, h2 {
+
+    h1,
+    h2 {
       color: #003366;
     }
+
     /* Claim Table 제목과 기본 테이블 사이 간격 */
     h2.claim-header {
       margin-top: 30px;
     }
+
     td span {
       display: inline-block;
       margin-bottom: 5px;
     }
+
     /* Delete 버튼 스타일 */
     .delete-product-btn {
       padding: 3px 6px;
@@ -170,9 +195,11 @@
       cursor: pointer;
       font-size: 0.8em;
     }
+
     .delete-product-btn:hover {
       background-color: #990000;
     }
+
     /* 빈 비교 목록 안내 메시지 */
     .empty-message {
       text-align: center;
@@ -180,12 +207,25 @@
       margin-top: 40px;
       color: #003366;
     }
+
     /* remark 텍스트를 다른 셀보다 작게 */
     .remark-text {
       font-size: 0.9em;
     }
+
+    .ui-autocomplete {
+      max-height: 300px;
+      /* 15개 항목에 해당하는 높이 */
+      overflow-y: auto;
+      /* 세로 스크롤바 활성화 */
+      overflow-x: hidden;
+      /* 가로 스크롤은 숨김 */
+      padding-right: 20px;
+      /* 스크롤바가 내용과 겹치지 않도록 여백 추가 */
+    }
   </style>
 </head>
+
 <body>
   <div class="header-container">
     <h1>Product Comparison</h1>
@@ -197,13 +237,12 @@
   </div>
 
   {% if products|length == 0 %}
-    <div class="empty-message">
-      <p>제품비교을 위해 검색창에 아이템코드를 입력하고 추가하세요</p>
-      <p>Enter and add item codes in the search bar for product comparison</p>
-    </div>
+  <div class="empty-message">
+    <p>제품비교을 위해 검색창에 아이템코드를 입력하고 추가하세요</p>
+    <p>Enter and add item codes in the search bar for product comparison</p>
+  </div>
   {% endif %}
-
-  <div class="tables-wrapper" {% if products|length == 0 %}style="display: none;"{% endif %}>
+  <div class="tables-wrapper" {% if products|length == 0 %}style="display: none;" {% endif %}>
     <!-- 기본정보 테이블 -->
     <h2>Basic Information</h2>
     <table id="basic-info-table" style="--product-count: {{ products|length }};">
@@ -278,18 +317,18 @@
         <tr>
           <th class="attribute">Main Claim</th>
           {% for product in products %}
-          <th class="product-name">{{ product[0] }}</th>
+          <th class="product-name">{{ product[1] }}</th>
           {% endfor %}
         </tr>
       </thead>
       <tbody class="claim-table">
         {% set all_claims = [] %}
         {% for product in products %}
-          {% for claim in claims.get(product[0], []) %}
-            {% if claim[0] not in all_claims %}
-              {% set _ = all_claims.append(claim[0]) %}
-            {% endif %}
-          {% endfor %}
+        {% for claim in claims.get(product[0], []) %}
+        {% if claim[0] not in all_claims %}
+        {% set _ = all_claims.append(claim[0]) %}
+        {% endif %}
+        {% endfor %}
         {% endfor %}
         {% set unique_claims = all_claims | unique | sort %}
         {% for main_claim in unique_claims %}
@@ -298,19 +337,19 @@
           {% for product in products %}
           <td>
             {% for claim in claims.get(product[0], []) %}
-              {% if claim[0] == main_claim %}
-                {% if claim[4] == 'Test O' %}
-                  <span class="test-o">
-                    {{ claim[2] }}<br>
-                    <span class="claim-desc">({{ claim[1] }})</span>
-                  </span>
-                {% else %}
-                  <span class="test-x-or-input">
-                    {{ claim[2] }}<br>
-                    <span class="claim-desc">({{ claim[1] }})</span>
-                  </span>
-                {% endif %}
-              {% endif %}
+            {% if claim[0] == main_claim %}
+            {% if claim[4] == 'Test O' %}
+            <span class="test-o">
+              {{ claim[2] }}<br>
+              <span class="claim-desc">({{ claim[1] }})</span>
+            </span>
+            {% else %}
+            <span class="test-x-or-input">
+              {{ claim[2] }}<br>
+              <span class="claim-desc">({{ claim[1] }})</span>
+            </span>
+            {% endif %}
+            {% endif %}
             {% endfor %}
           </td>
           {% endfor %}
@@ -324,15 +363,15 @@
     // 전역 변수: 제품 추가 순서를 관리 (세션과 별개)
     let productOrder = [];
 
-    $(document).ready(function() {
+    $(document).ready(function () {
       // 자동완성
       $("#item-code-input").autocomplete({
-        source: function(request, response) {
+        source: function (request, response) {
           $.ajax({
             url: "/get_item_codes",
             dataType: "json",
             data: { term: request.term },
-            success: function(data) {
+            success: function (data) {
               response(data);
             }
           });
@@ -340,17 +379,18 @@
         minLength: 2
       });
 
+      // function to load compared products
       function loadComparedProducts() {
         $.ajax({
           url: "/get_compared_products",
           method: "GET",
-          success: function(response) {
+          success: function (response) {
             if (response.success) {
               // 제품이 하나 이상이면 테이블 보이고 안내 문구 숨김
-              if(response.products.length > 0) {
+              if (response.products.length > 0) {
                 $(".empty-message").hide();
                 // 페이드 속도 80ms
-                $(".tables-wrapper").fadeOut(80, function(){
+                $(".tables-wrapper").fadeOut(80, function () {
                   updateBasicTable(response.products);
                   updateClaimTable(response.products);
                   $(".tables-wrapper").fadeIn(80);
@@ -364,7 +404,7 @@
               alert("Failed to load products: " + response.message);
             }
           },
-          error: function() {
+          error: function () {
             alert("Error loading compared products.");
           }
         });
@@ -383,7 +423,7 @@
         let orderedProducts = productOrder.map(code => {
           return products.find(product => product.item_code === code);
         }).filter(product => product !== undefined);
-        
+
         // CSS 변수 업데이트
         $("#basic-info-table").css("--product-count", orderedProducts.length);
 
@@ -425,10 +465,10 @@
             });
           }
         });
-        
+
         // 삭제 버튼 행 업데이트
         let $deleteRow = $("#basic-info-table tbody tr.delete-button-row");
-        if($deleteRow.length === 0){
+        if ($deleteRow.length === 0) {
           // 삭제 버튼 행이 없으면 생성
           let deleteRowHtml = `<tr class="delete-button-row"><td></td>`;
           orderedProducts.forEach(product => {
@@ -451,8 +491,10 @@
         $("#claim-table").css("--product-count", products.length);
         let $claimHead = $("#claim-table thead tr");
         $claimHead.find("th:not(.attribute)").remove();
+
+        // 제품 이름으로 헤더 업데이트
         products.forEach(product => {
-          let newColumn = `<th class="product-name">${product[0]}</th>`;
+          let newColumn = `<th class="product-name">${product.name}</th>`;
           $claimHead.append(newColumn);
         });
 
@@ -460,12 +502,21 @@
         $claimBody.empty();
         let allClaims = new Set();
         products.forEach(product => {
-          product.claims.forEach(claim => allClaims.add(claim.claim_main));
+          // product.claims가 존재하는지 확인
+          if (product.claims && Array.isArray(product.claims)) {
+            product.claims.forEach(claim => allClaims.add(claim.claim_main));
+          }
         });
+
         allClaims.forEach(mainClaim => {
           let row = `<tr><td class="attribute">${mainClaim}</td>`;
           products.forEach(product => {
-            let claimData = product.claims.find(c => c.claim_main === mainClaim);
+            let claimData = null;
+            // product.claims가 존재하는지 확인
+            if (product.claims && Array.isArray(product.claims)) {
+              claimData = product.claims.find(c => c.claim_main === mainClaim);
+            }
+
             if (claimData) {
               let styleClass = (claimData.test_result === "Test O") ? "test-o" : "test-x-or-input";
               row += `
@@ -484,7 +535,7 @@
       }
 
       // Add 버튼
-      $("#add-product-btn").click(function() {
+      $("#add-product-btn").click(function () {
         var itemCode = $("#item-code-input").val();
         console.log("Adding product:", itemCode);
         if (itemCode) {
@@ -492,18 +543,18 @@
             url: "/add_product_to_compare",
             method: "POST",
             data: { item_code: itemCode },
-            success: function(response) {
+            success: function (response) {
               console.log("Server response:", response);
               if (response.success) {
                 // 테이블 페이드아웃 후 다시 로드 (80ms)
-                $(".tables-wrapper").fadeOut(80, function(){
+                $(".tables-wrapper").fadeOut(80, function () {
                   loadComparedProducts();
                 });
               } else {
                 alert("Failed to add product: " + response.message);
               }
             },
-            error: function() {
+            error: function () {
               alert("An error occurred while adding the product.");
             }
           });
@@ -513,18 +564,18 @@
       });
 
       // Delete 버튼: 세션 비교목록에서 제거
-      $(document).on('click', '.delete-product-btn', function() {
+      $(document).on('click', '.delete-product-btn', function () {
         let itemCode = $(this).data('item-code');
         $.ajax({
           url: '/remove_from_compare/' + itemCode,
           method: 'GET',
-          success: function(response) {
+          success: function (response) {
             productOrder = productOrder.filter(code => code !== itemCode);
-            $(".tables-wrapper").fadeOut(80, function(){
+            $(".tables-wrapper").fadeOut(80, function () {
               loadComparedProducts();
             });
           },
-          error: function(xhr, status, error) {
+          error: function (xhr, status, error) {
             console.error("Delete error:", status, error);
             alert("An error occurred while removing the product from compare.");
           }
@@ -536,4 +587,5 @@
     });
   </script>
 </body>
+
 </html>
