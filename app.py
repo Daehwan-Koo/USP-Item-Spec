@@ -576,9 +576,27 @@ def search_products():
     # 일반 필터 추가 (item_code, item_name, description, unit_size, color, dosage, product_type 등)
     for field, value in filters.items():
         if field not in ["weight", "claim_concentration", "claim_concentration_tolerance", "claim_main",
-                         "claim_description", "claim_unit", "claim_filter_type", "dosage", "product_type", "weight_tolerance", "all_unit"]:
+                         "claim_description", "claim_unit", "claim_filter_type", "dosage", "product_type", "weight_tolerance", "all_unit", "unit_size", "color"]:
             base_query += f" AND p.{field} LIKE :{field}"
             params[field] = f"%{value}%"
+
+    # unit_size 필터 처리 (OR 조건)
+    if "unit_size" in filters:
+        unit_sizes = filters["unit_size"].split(',')
+        if unit_sizes:
+            placeholders = [f":unit_size_{i}" for i in range(len(unit_sizes))]
+            base_query += " AND p.unit_size IN (" + ", ".join(placeholders) + ")"
+            for i, unit_size in enumerate(unit_sizes):
+                params[f"unit_size_{i}"] = unit_size.strip()
+
+    # color 필터 처리 (OR 조건)
+    if "color" in filters:
+        colors = filters["color"].split(',')
+        if colors:
+            placeholders = [f":color_{i}" for i in range(len(colors))]
+            base_query += " AND p.color IN (" + ", ".join(placeholders) + ")"
+            for i, color in enumerate(colors):
+                params[f"color_{i}"] = color.strip()
 
     # Claim 필터 (단위 변환 포함 + 포함/미포함 옵션 적용)
     if "claim_main" in filters or "claim_description" in filters or "claim_concentration" in filters or "claim_unit" in filters:

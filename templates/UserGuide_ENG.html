@@ -6,24 +6,23 @@
   <title>User Guide (ENG)</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
+    body {
+      font-family: Arial, sans-serif;
       margin: 0;
       padding: 20px;
-      background-color: #f0f8ff; 
-      line-height: 1.8;
+      background-color: #c1cbd6;
+      line-height: 1.2;
       color: #333;
     }
     .container {
-      max-width: 800px;
+      max-width: 1400px;
       margin: 0 auto;
-      background-color: white;
+      background-color: #e1e7ed;
       padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 30px;
     }
-    h1 { 
-      color: #003366; 
+    h1 {
+      color: #003366;
       font-size: 28px;
       border-bottom: 2px solid #003366;
       padding-bottom: 10px;
@@ -38,7 +37,7 @@
       font-size: 18px;
       margin-top: 20px;
     }
-    p { 
+    p {
       white-space: pre-wrap;
       margin-bottom: 15px;
     }
@@ -53,16 +52,52 @@
       padding: 10px;
       border-radius: 5px;
     }
+    /* Button Styles */
+    .back-button {
+      background-color: #003366;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+    .back-button:hover {
+      background-color: #1976D2;
+    }
+    .button-container {
+      text-align: right;
+      margin-top: 10px; /* Title Vertical Bottom Space */
+    }
+    /* Fixed Footer Button */
+    .fixed-footer-button {
+      position: fixed;
+      bottom: 0;
+      right: 20px;
+      z-index: 1;
+    }
   </style>
+  <script>
+    function goBack() {
+      window.history.back();
+    }
+  </script>
 </head>
 <body>
   <div class="container">
-    <h1>USP Product Specification List - User Guide (ENG)</h1>
-    
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <h1>USP Product Specification List - User Guide (ENG)</h1>
+      <button class="back-button" onclick="goBack()">Back</button>
+    </div>
+
     <p>This application manages the basic information and claim data of USP products, providing product comparison and search functionalities.</p>
 
     <h2>1. Login &amp; User Roles</h2>
-    <h3>Login Page </h3>
+    <h3>Login Page</h3>
     <p>Users can log in by entering their password when using the application for the first time.</p>
     <p>User Roles:</p>
     <ul>
@@ -106,21 +141,19 @@
     <h2>6. Product Search &amp; Filtering</h2>
     <h3>Search Form Usage (Search Area on Main Page)</h3>
     <p>Users can search products using various fields (e.g., Item Code, Item Name, Description, Weight, etc.).</p>
-    <div class="highlight">
       <p><strong>Numeric Filters:</strong><br>
       When entering Weight, users can specify a "Weight Tolerance (%)" to find products within a tolerance range (default: 10%).</p>
-    </div>
     <p><strong>Unit Size &amp; Color Selection:</strong><br>
     Clicking "Select Unit Size" or "Select Color" opens selection windows.</p>
     <p><strong>Claim Search:</strong><br>
     Users can add multiple claim search fields and specify conditions for each (e.g., main claim, description, concentration, unit, tolerance, and inclusion/exclusion criteria).<br>
-    Clicking "Add Claim Search" adds a new row for claims.</p>
-    <p>Clicking "Add Vitamins &amp; Minerals" opens a window where users can select components to add to the claim search.</p>
+    Clicking "Add Claim Search" adds a new row for claims.<br>
+    Clicking "Add Vitamins &amp; Minerals" opens a window where users can select components to add to the claim search.<br>
     <p><strong>Load Specifications:</strong><br>
     Clicking the "Load Specifications" button opens a window where users can enter an Item Code to automatically load claim information into the search fields.</p>
     <p><strong>Search Execution:</strong><br>
-    Clicking the "Search" button updates the product list based on the applied filters, while the "Clear" button resets search conditions.</p>
-    <p>A "Re-search" function allows users to refine results within a previous search.</p>
+    Clicking the "Search" button updates the product list based on the applied filters, while the "Clear" button resets search conditions.<br>
+    A "Re-search" function allows users to refine results within a previous search.<br>
 
     <h2>7. Product Comparison</h2>
     <h3>Comparison Function (Compare)</h3>
@@ -136,6 +169,10 @@
     <h2>8. Troubleshooting &amp; Additional Notes</h2>
     <h3>Further Assistance</h3>
     <p>If issues persist or additional support is needed, contact the administrator (development team).</p>
+    <div class="button-container">
+      <button class="back-button" onclick="goBack()">Back</button>
+    </div>
   </div>
+
 </body>
 </html>
