@@ -766,8 +766,9 @@
       }
       
       .top-bar {
-            flex-direction: column;
-            align-items: flex-start;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: center;
       }
       .top-bar a {
             margin-left: 0;
@@ -783,13 +784,20 @@
       
       .green-button,
       .vertical-search-btn,
-      .addclaim-button,
-      .logout-button {
+      .addclaim-button {
             height: 28px;
             line-height: 28px;
             font-size: 12px;
             padding: 0 8px;
             min-width: 80px;
+      }
+
+      .logout-button {
+            height: 28px;
+            line-height: 28px;
+            font-size: 12px;
+            padding: 0 8px;
+            min-width: auto;
       }
       
       /* 모바일에서 모달 기본 패딩 줄이기 (왼쪽 잘림 방지) */
@@ -809,6 +817,7 @@
             white-space: nowrap !important;       /* 가로로 나열 */
             justify-content: flex-start;
             padding-left: 0;
+            margin-left: 0;
       }
 
       /* 각 .modal-column은 inline-block으로 가로로 이어붙이기 */
