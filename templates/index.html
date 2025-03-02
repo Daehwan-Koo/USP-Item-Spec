@@ -1264,7 +1264,8 @@
         select: function(event, ui) {
           $elem.val(ui.item.value);
           return false;
-        }
+        },
+        appendTo: "#loadSpecsModal"
       });
       var acInstance = $elem.autocomplete("instance") || $elem.data("ui-autocomplete");
       if (acInstance) {
@@ -1277,6 +1278,7 @@
     initAutocomplete('item_code', 'item_code');
     initAutocomplete('item_name', 'item_name');
     initAutocomplete('description', 'description');
+    initAutocomplete('loadSpecsItemCode', 'item_code');
 
     /* Claim 자동완성: maxShowItems 옵션 제거 */
     function initClaimDescriptionAutocomplete(element, mainClaimValue) {
