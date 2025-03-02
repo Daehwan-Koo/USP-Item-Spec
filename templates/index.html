@@ -24,7 +24,7 @@
     #loadSpecsModal .modal-content {
       padding-bottom: 20px;
       position: absolute;
-      top: 50%;
+      top: 30%;
       left: 50%;
       transform: translate(-50%, -50%);
       margin: 0;
@@ -224,11 +224,16 @@
     #item_name, #description {
       min-width: 250px;
     }
+    #weight, input[name="weight_tolerance"] {
+      width: 30px; !important;
+      min-width: 100px !important;
+    }
+
     .search-fields input {
       height: 23px;
     }
     .search-fields select {
-      height: 23px;
+      height: 28px !important;
     }
     /* ---------- Select Unit Size, Select Color 버튼 ---------- */
     button.filter-button {
@@ -316,6 +321,7 @@
     .addclaim-button:hover {
       background-color: #1976D2;
     }
+
     /* ---------- 클레임 검색필드 수평 정렬 (줄바꿈 위해 flex-wrap 추가) ---------- */
     .claim-search-row {
       display: flex;
@@ -330,8 +336,10 @@
       font-size: 14px;
     }
     .claim-search-row select {
-      min-width: 200px;
+      min-width: 100px;
+      height: 28px !important;
     }
+
     /* ---------- Remove 버튼 ---------- */
     .remove-claim-search {
       background-color: #f44336;
@@ -585,13 +593,14 @@
     }
     .modal-content {
       background-color: #dceaf7;
-      padding: 70px 70px 10px 70px;
+      padding: 20px 70px 40px 70px;
       border: 1px solid #888;
       width: 80%;
       max-width: 1000px;
       box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
       border-radius: 30px;
       overflow: auto;
+
     }
     .modal-header {
       margin-bottom: 10px;
@@ -622,6 +631,12 @@
     #unitSizeModal .modal-content,
     #colorModal .modal-content {
       font-size: 12px;
+      display: inline-block;
+      vertical-align: top;
+      flex-direction: column;
+      vertical-align: top;
+      flex-grow: 1;  /* 컬럼이 남은 높이를 채우도록 */
+      min-height: 300px; /* 기본 최소 높이 지정 */
     }
     #unitSizeModal .modal-column,
     #colorModal .modal-column {
@@ -732,78 +747,100 @@
 
       /* 전체 폰트 사이즈 및 여백 조정 */
       body {
-        margin: 10px;
-        font-size: 14px;
+            margin: 10px;
+            font-size: 14px;
       }
       table {
-        font-size: 11px;
+            font-size: 11px;
       }
       
-      /* 검색폼: 입력창, 선택박스 및 버튼 크기 축소 */
       .search-fields input,
       .search-fields select,
       button.filter-button {
-        min-width: 120px;
-        font-size: 12px;
-        line-height: 20px;
+            min-width: 90px;
+            font-size: 12px;
+            line-height: 20px;
       }
       #item_name, #description {
-        min-width: 180px;
+            min-width: 180px;
       }
       
-      /* 상단 바: flex 방향을 column으로 변경하여 세로배열 */
       .top-bar {
-        flex-direction: column;
-        align-items: flex-start;
+            flex-direction: column;
+            align-items: flex-start;
       }
       .top-bar a {
-        margin-left: 0;
-        margin-top: 5px;
+            margin-left: 0;
+            margin-top: 5px;
       }
       
-      /* 제품 헤더 및 Total Items 영역: 글자 크기 및 간격 조정 */
       .product-header h1 {
-        font-size: 1.2em;
+            font-size: 1.2em;
       }
       .total-items {
-        font-size: 14px;
+            font-size: 14px;
       }
       
-      /* 버튼들: 높이, 패딩, 글자 크기 축소 */
       .green-button,
       .vertical-search-btn,
       .addclaim-button,
       .logout-button {
-        height: 28px;
-        line-height: 28px;
-        font-size: 12px;
-        padding: 0 8px;
-        min-width: 80px;
+            height: 28px;
+            line-height: 28px;
+            font-size: 12px;
+            padding: 0 8px;
+            min-width: 80px;
       }
       
-      /* 모달 관련 스타일: 모달창 크기, 패딩, 둥근 모서리만 조정 */
+      /* 모바일에서 모달 기본 패딩 줄이기 (왼쪽 잘림 방지) */
       .modal-content {
-        width: 90%;
-        max-width: 90%;
-        padding: 20px;
-        border-radius: 10px;
+            width: 90%;
+            max-width: 90%;
+            padding: 20px;
+            border-radius: 10px;
+            box-sizing: border-box;
       }
-      /* #colorModal은 상단 위치를 약간 내림 */
+
+      /* Unit Size & Color 모달에서 .modal-grid를 가로 스크롤 가능하도록 설정 */
+      #unitSizeModal .modal-grid,
+      #colorModal .modal-grid {
+            display: flex !important;            /* flex 대신 block으로 */
+            overflow-x: auto !important;          /* 가로 스크롤 허용 */
+            white-space: nowrap !important;       /* 가로로 나열 */
+            justify-content: flex-start;
+            padding-left: 0;
+      }
+
+      /* 각 .modal-column은 inline-block으로 가로로 이어붙이기 */
+      #unitSizeModal .modal-column,
+      #colorModal .modal-column {
+            display: flex;
+            vertical-align: top;
+            flex-direction: column;
+            align-items: flex-start;  /* 내부 요소 좌측 정렬 */
+            vertical-align: top;
+            flex-grow: 1;  /* 컬럼이 남은 높이를 채우도록 */
+            min-height: 300px; /* 기본 최소 높이 지정 */
+            }
+
+      /* 모달 자체 위치: 좌우 중앙, 위쪽 약간 내림 */
+      #unitSizeModal .modal-content,
       #colorModal .modal-content {
-        top: 10% !important;
-        transform: translate(-50%, 0) !important;
+            top: 10% !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            margin: 0 auto;
       }
       
       /* 자동완성 결과창: 최대 높이 축소 */
       .ui-autocomplete {
-        max-height: 200px;
+            max-height: 200px;
       }
       
-      /* 검색 컨테이너, 버튼 및 여백 조정 */
       .search-container {
-        padding: 10px;
-        margin-top: 15px;
-        margin-bottom: 15px;
+            padding: 10px;
+            margin-top: 15px;
+            margin-bottom: 15px;
       }
     }
   </style>
@@ -880,7 +917,7 @@
             <input type="text" name="item_name" id="item_name" placeholder="Item Name" value="{{ search_filters.get('item_name', '') }}" />
             <input type="text" name="description" id="description" placeholder="Description" value="{{ search_filters.get('description', '') }}" />
             <input type="text" name="weight" id="weight" step="0.0001" placeholder="Weight (mg)" value="{{ search_filters.get('weight', '') }}" />
-            <input type="text" name="weight_tolerance" placeholder="Weight Tolerance (%)" value="{{ search_filters.get('weight_tolerance', '') }}" />
+            <input type="text" name="weight_tolerance" placeholder="Tolerance (%)" value="{{ search_filters.get('weight_tolerance', '') }}" />
             <!-- Select Unit Size & Select Color 버튼 -->
             <button type="button" id="unit_size_btn" class="filter-button">Select Unit Size</button>
             <input type="hidden" name="unit_size" id="unit_size_hidden" value="{{ search_filters.get('unit_size', '') }}" />
@@ -936,7 +973,7 @@
                   <option value="mcgDFE">mcgDFE</option>
                   <option value="B cfu">B cfu</option>
                 </select>
-                <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)">
+                <input type="number" name="claim_concentration_tolerance[]" placeholder="Tolerance (%)">
                 <select name="claim_filter_type[]">
                   <option value="include" selected>Include(포함)</option>
                   <option value="exclude">Exclude(제외)</option>
