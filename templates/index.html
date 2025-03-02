@@ -39,7 +39,7 @@
       animation: modalFadeIn 0.3s ease-out;
       margin: 0;
     }
-    /* Select Color 모달: 상단이 짤리지 않도록 상단 5%에 위치 */
+    /* Select Color 모달: 기본은 상단 5%에서 시작(데스크탑 전용) */
     #colorModal .modal-content {
       top: 5% !important;
       transform: translate(-50%, 0) !important;
@@ -48,7 +48,7 @@
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
-      background-color: #f0f8ff;
+      background-color: #e1e7ed;
     }
     table {
       width: 100%;
@@ -513,7 +513,7 @@
     }
     /* ---------- 검색 컨테이너 ---------- */
     .search-container {
-      background-color: #e6e6ff;
+      background-color: #c1cbd6;
       border-radius: 10px;
       padding: 15px;
       margin-top: 20px;
@@ -585,9 +585,7 @@
     }
     .modal-content {
       background-color: #dceaf7;
-      padding: 70px;
-      padding-top: 10px;
-      padding-bottom: 10px;
+      padding: 70px 70px 10px 70px;
       border: 1px solid #888;
       width: 80%;
       max-width: 1000px;
@@ -725,6 +723,88 @@
     .modal-button:hover,
     .modal-button.primary:hover {
       background-color: #1976D2;
+    }
+
+    /* ======================================================
+       모바일 전용 스타일 (화면폭 768px 이하) - 데스크탑 스타일은 그대로 유지
+    ====================================================== */
+    @media only screen and (max-width: 768px) {
+
+      /* 전체 폰트 사이즈 및 여백 조정 */
+      body {
+        margin: 10px;
+        font-size: 14px;
+      }
+      table {
+        font-size: 11px;
+      }
+      
+      /* 검색폼: 입력창, 선택박스 및 버튼 크기 축소 */
+      .search-fields input,
+      .search-fields select,
+      button.filter-button {
+        min-width: 120px;
+        font-size: 12px;
+        line-height: 20px;
+      }
+      #item_name, #description {
+        min-width: 180px;
+      }
+      
+      /* 상단 바: flex 방향을 column으로 변경하여 세로배열 */
+      .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .top-bar a {
+        margin-left: 0;
+        margin-top: 5px;
+      }
+      
+      /* 제품 헤더 및 Total Items 영역: 글자 크기 및 간격 조정 */
+      .product-header h1 {
+        font-size: 1.2em;
+      }
+      .total-items {
+        font-size: 14px;
+      }
+      
+      /* 버튼들: 높이, 패딩, 글자 크기 축소 */
+      .green-button,
+      .vertical-search-btn,
+      .addclaim-button,
+      .logout-button {
+        height: 28px;
+        line-height: 28px;
+        font-size: 12px;
+        padding: 0 8px;
+        min-width: 80px;
+      }
+      
+      /* 모달 관련 스타일: 모달창 크기, 패딩, 둥근 모서리만 조정 */
+      .modal-content {
+        width: 90%;
+        max-width: 90%;
+        padding: 20px;
+        border-radius: 10px;
+      }
+      /* #colorModal은 상단 위치를 약간 내림 */
+      #colorModal .modal-content {
+        top: 10% !important;
+        transform: translate(-50%, 0) !important;
+      }
+      
+      /* 자동완성 결과창: 최대 높이 축소 */
+      .ui-autocomplete {
+        max-height: 200px;
+      }
+      
+      /* 검색 컨테이너, 버튼 및 여백 조정 */
+      .search-container {
+        padding: 10px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+      }
     }
   </style>
 </head>
