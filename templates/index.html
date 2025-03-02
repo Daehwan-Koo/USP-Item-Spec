@@ -228,7 +228,6 @@
       width: 30px; !important;
       min-width: 100px !important;
     }
-
     .search-fields input {
       height: 23px;
     }
@@ -321,7 +320,6 @@
     .addclaim-button:hover {
       background-color: #1976D2;
     }
-
     /* ---------- 클레임 검색필드 수평 정렬 (줄바꿈 위해 flex-wrap 추가) ---------- */
     .claim-search-row {
       display: flex;
@@ -339,7 +337,6 @@
       min-width: 100px;
       height: 28px !important;
     }
-
     /* ---------- Remove 버튼 ---------- */
     .remove-claim-search {
       background-color: #f44336;
@@ -485,7 +482,6 @@
       width: 100%;
       justify-content: right; /* 중앙 정렬, 필요시 left 또는 space-between 등으로 조정 */
     }
-
     .top-bar-info span {
       margin-right: 10px;
     }
@@ -605,7 +601,6 @@
       box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
       border-radius: 30px;
       overflow: auto;
-
     }
     .modal-header {
       margin-bottom: 10px;
@@ -640,8 +635,8 @@
       vertical-align: top;
       flex-direction: column;
       vertical-align: top;
-      flex-grow: 1;  /* 컬럼이 남은 높이를 채우도록 */
-      min-height: 300px; /* 기본 최소 높이 지정 */
+      flex-grow: 1;
+      min-height: 300px;
     }
     #unitSizeModal .modal-column,
     #colorModal .modal-column {
@@ -744,140 +739,120 @@
     .modal-button.primary:hover {
       background-color: #1976D2;
     }
-
     /* ======================================================
        모바일 전용 스타일 (화면폭 768px 이하) - 데스크탑 스타일은 그대로 유지
     ====================================================== */
     @media only screen and (max-width: 768px) {
-
-      /* 전체 폰트 사이즈 및 여백 조정 */
       body {
-            margin: 10px;
-            font-size: 14px;
+        margin: 10px;
+        font-size: 14px;
       }
       table {
-            font-size: 11px;
+        font-size: 11px;
       }
-      
       .search-fields input,
       .search-fields select,
       button.filter-button {
-            min-width: 90px;
-            font-size: 12px;
-            line-height: 20px;
+        min-width: 90px;
+        font-size: 12px;
+        line-height: 20px;
       }
       #item_name, #description {
-            min-width: 180px;
+        min-width: 180px;
       }
-      
       .top-bar {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: nowrap;
-            justify-content: space-between; 
-            align-items: center;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: space-between; 
+        align-items: center;
       }
       .top-bar-info {
-            display: flex;
-            align-items: center;
-            gap: 1px; /* 버튼 간의 간격 */
-            width: 100%;
-            justify-content: right; /* 중앙 정렬, 필요시 left 또는 space-between 등으로 조정 */
-
+        display: flex;
+        align-items: center;
+        gap: 1px;
+        width: 100%;
+        justify-content: right;
+      }
       .top-bar-title img {
-            max-height: 30px; 
+        max-height: 30px;
       }
-
       .top-bar a {
-            margin-left: 0;
-            margin-top: 5px;
+        margin-left: 0;
+        margin-top: 5px;
       }
-      
       .product-header h1 {
-            font-size: 1.2em;
+        font-size: 1.2em;
       }
       .total-items {
-            font-size: 14px;
+        font-size: 14px;
       }
-      
       .green-button,
       .vertical-search-btn,
       .addclaim-button {
-            height: 28px;
-            line-height: 28px;
-            font-size: 12px;
-            padding: 0 8px;
-            min-width: 80px;
+        height: 28px;
+        line-height: 28px;
+        font-size: 12px;
+        padding: 0 8px;
+        min-width: 80px;
       }
-
       .logout-button {
-            height: 28px;
-            line-height: 28px;
-            font-size: 12px;
-            padding: 0 8px;
-            min-width: auto;
+        height: 28px;
+        line-height: 28px;
+        font-size: 12px;
+        padding: 0 8px;
+        min-width: auto;
       }
-      
-      /* 모바일에서 모달 기본 패딩 줄이기 (왼쪽 잘림 방지) */
       .modal-content {
-            width: 90%;
-            max-width: 90%;
-            padding: 20px;
-            border-radius: 10px;
-            box-sizing: border-box;
+        width: 90%;
+        max-width: 90%;
+        padding: 20px;
+        border-radius: 10px;
+        box-sizing: border-box;
       }
-
-      /* Unit Size & Color 모달에서 .modal-grid를 가로 스크롤 가능하도록 설정 */
       #unitSizeModal .modal-grid,
       #colorModal .modal-grid {
-            display: flex !important;            /* flex 대신 block으로 */
-            flex-wrap: nowrap;    /* 줄바꿈 없이 가로로 나열 */
-            overflow-x: auto !important;          /* 가로 스크롤 허용 */
-            white-space: nowrap !important;       /* 가로로 나열 */
-            justify-content: flex-start;
-            padding-left: 0;
-            margin-left: 0;
-            align-items: flex-start !important;   /* 내부 요소 좌측 정렬 */
-            text-align: left; /* 내부 텍스트 및 콘텐츠 왼쪽 정렬 */
+        display: flex !important;
+        flex-wrap: nowrap;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        justify-content: flex-start;
+        padding-left: 0;
+        margin-left: 0;
+        align-items: flex-start !important;
+        text-align: left;
       }
-
-      /* 각 .modal-column은 inline-block으로 가로로 이어붙이기 */
       #unitSizeModal .modal-column,
       #colorModal .modal-column {
-            display: flex;
-            vertical-align: top;
-            flex-direction: column;
-            vertical-align: top;
-            flex-grow: 1;  /* 컬럼이 남은 높이를 채우도록 */
-            min-height: 300px; /* 기본 최소 높이 지정 */
-            align-items: flex-start !important;   /* 내부 요소 좌측 정렬 */
-            text-align: left; /* 내부 텍스트 및 콘텐츠 왼쪽 정렬 */
-            }
-
-      /* 모달 자체 위치: 좌우 중앙, 위쪽 약간 내림 */
+        display: flex;
+        vertical-align: top;
+        flex-direction: column;
+        vertical-align: top;
+        flex-grow: 1;
+        min-height: 300px;
+        align-items: flex-start !important;
+        text-align: left;
+      }
       #unitSizeModal .modal-content,
       #colorModal .modal-content {
-            position: relative;  /* 또는 absolute가 필요하다면 left/top을 0으로 */
-            top: auto !important;
-            left: auto !important;
-            transform: none !important;
-            margin: 0 !important;
-            width: 90% !important;       /* 모바일에서 모달 자체 너비를 90% 정도로 */
-            max-width: 90% !important;
-            overflow: visible !important; /* 내부 스크롤이 가능하도록 visible 권장 */
-            align-items: flex-start !important;   /* 내부 요소 좌측 정렬 */
-            text-align: left; /* 내부 텍스트 및 콘텐츠 왼쪽 정렬 */
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        transform: none !important;
+        margin: 0 !important;
+        width: 90% !important;
+        max-width: 90% !important;
+        overflow: visible !important;
+        align-items: flex-start !important;
+        text-align: left;
       }
-      
-      /* 자동완성 결과창: 최대 높이 축소 */
       .ui-autocomplete {
-            max-height: 200px;
+        max-height: 200px;
       }
-      
       .search-container {
-            padding: 10px;
-            margin-top: 15px;
-            margin-bottom: 15px;
+        padding: 10px;
+        margin-top: 15px;
+        margin-bottom: 15px;
       }
     }
   </style>
@@ -953,8 +928,8 @@
             <input type="text" name="item_code" id="item_code" placeholder="Item Code" value="{{ search_filters.get('item_code', '') }}" />
             <input type="text" name="item_name" id="item_name" placeholder="Item Name" value="{{ search_filters.get('item_name', '') }}" />
             <input type="text" name="description" id="description" placeholder="Description" value="{{ search_filters.get('description', '') }}" />
-            <input type="text" name="weight" id="weight" step="0.0001" placeholder="Weight (mg)" value="{{ search_filters.get('weight', '') }}" />
-            <input type="text" name="weight_tolerance" placeholder="Tolerance (%)" value="{{ search_filters.get('weight_tolerance', '') }}" />
+            <input type="number" inputmode="decimal" name="weight" id="weight" step="0.0001" placeholder="Weight (mg)" value="{{ search_filters.get('weight', '') }}" />
+            <input type="number" inputmode="decimal" name="weight_tolerance" placeholder="Tolerance (%)" value="{{ search_filters.get('weight_tolerance', '') }}" />
             <!-- Select Unit Size & Select Color 버튼 -->
             <button type="button" id="unit_size_btn" class="filter-button">Select Unit Size</button>
             <input type="hidden" name="unit_size" id="unit_size_hidden" value="{{ search_filters.get('unit_size', '') }}" />
@@ -968,7 +943,7 @@
                 <div class="claim-search-row">
                   <input type="text" name="claim_main[]" class="claim-main-input" placeholder="Claim Main" value="{{ search_filters['claim_main'][i] }}">
                   <input type="text" name="claim_description[]" class="claim-description-input" placeholder="Claim Description" value="{{ search_filters['claim_description'][i] }}">
-                  <input type="number" name="claim_concentration[]" step="0.0001" placeholder="Claim Concentration" value="{{ search_filters['claim_concentration'][i] }}">
+                  <input type="number" inputmode="decimal" name="claim_concentration[]" step="0.0001" placeholder="Claim Concentration" value="{{ search_filters['claim_concentration'][i] }}">
                   <select name="claim_unit[]">
                     <option value="">All Units</option>
                     <option value="mg" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]=='mg' %}selected{% endif %}>mg</option>
@@ -983,7 +958,7 @@
                     <option value="mcgDFE" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]=='mcgDFE' %}selected{% endif %}>mcgDFE</option>
                     <option value="B cfu" {% if search_filters.get('claim_unit') and search_filters['claim_unit'][i]=='B cfu' %}selected{% endif %}>B cfu</option>
                   </select>
-                  <input type="number" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)" value="{% if search_filters.get('claim_concentration_tolerance') and i < search_filters.claim_concentration_tolerance|length %}{{ search_filters.claim_concentration_tolerance[i] }}{% endif %}">
+                  <input type="number" inputmode="decimal" name="claim_concentration_tolerance[]" placeholder="Claim Tolerance (%)" value="{% if search_filters.get('claim_concentration_tolerance') and i < search_filters.claim_concentration_tolerance|length %}{{ search_filters.claim_concentration_tolerance[i] }}{% endif %}">
                   <select name="claim_filter_type[]">
                     <option value="include" selected>Include(포함)</option>
                     <option value="exclude">Exclude(제외)</option>
@@ -1506,7 +1481,13 @@
         selected.push(el.value);
       });
       document.getElementById('unit_size_hidden').value = selected.join(',');
-      document.getElementById('unit_size_btn').textContent = selected.length ? (selected.length + " Size Selected") : "Select Unit Size";
+      if (selected.length > 0) {
+        document.getElementById('unit_size_btn').textContent = selected.length + " Size Selected";
+        document.getElementById('unit_size_btn').style.backgroundColor = "#c43931";
+      } else {
+        document.getElementById('unit_size_btn').textContent = "Select Unit Size";
+        document.getElementById('unit_size_btn').style.backgroundColor = "#013f7d";
+      }
       closeUnitSizeModal();
     }
 
@@ -1572,7 +1553,13 @@
         selected.push(el.value);
       });
       document.getElementById('color_hidden').value = selected.join(',');
-      document.getElementById('color_btn').textContent = selected.length ? (selected.length + " Color selected") : "Select Color";
+      if (selected.length > 0) {
+        document.getElementById('color_btn').textContent = selected.length + " Color Selected";
+        document.getElementById('color_btn').style.backgroundColor = "#c43931";
+      } else {
+        document.getElementById('color_btn').textContent = "Select Color";
+        document.getElementById('color_btn').style.backgroundColor = "#013f7d";
+      }
       closeColorModal();
     }
 
@@ -1584,6 +1571,30 @@
         }
       });
     };
+  </script>
+
+  <!-- 새로 추가하는 스크립트: 페이지 로드시 버튼 업데이트 -->
+  <script>
+    $(document).ready(function() {
+      // Unit Size 버튼 업데이트
+      var unitSizeVal = $("#unit_size_hidden").val().trim();
+      if (unitSizeVal !== "") {
+        var unitSizes = unitSizeVal.split(',').filter(function(val) { return val.trim() !== ""; });
+        if (unitSizes.length > 0) {
+          $("#unit_size_btn").text(unitSizes.length + " Size Selected");
+          $("#unit_size_btn").css("background-color", "#c43931");
+        }
+      }
+      // Color 버튼 업데이트
+      var colorVal = $("#color_hidden").val().trim();
+      if (colorVal !== "") {
+        var colors = colorVal.split(',').filter(function(val) { return val.trim() !== ""; });
+        if (colors.length > 0) {
+          $("#color_btn").text(colors.length + " Color Selected");
+          $("#color_btn").css("background-color", "#c43931");
+        }
+      }
+    });
   </script>
 </body>
 </html>
